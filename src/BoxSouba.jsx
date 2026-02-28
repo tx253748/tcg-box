@@ -43,7 +43,23 @@ const BoxDetail = ({ box, brand, onClose }) => {
   const { isPremium } = usePremium();
   const [topCards, setTopCards] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { if (!box) return; sbFetch(`box_top_cards?select=*&box_id=eq.${box.id}&order=rank`).then(d => { setTopCards(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => { setTopCards([]); setLoading(false); }); }, [box]);
+  useEffect(() => {
+    if (!box) return;
+    // box_top_cards → featured_cards をJOINして取得
+    sbFetch(`box_top_cards?select=rank,probability,featured_cards(id,name,rarity,price,img_url,pack)&box_id=eq.${box.id}&order=rank`)
+      .then(d => {
+        if (!Array.isArray(d)) { setTopCards([]); setLoading(false); return; }
+        setTopCards(d.map(r => ({
+          rank: r.rank,
+          probability: parseFloat(r.probability),
+          card_name: r.featured_cards?.name || "",
+          rarity: r.featured_cards?.rarity || "",
+          card_price: r.featured_cards?.price || 0,
+          image_url: r.featured_cards?.img_url || null,
+        })));
+        setLoading(false);
+      }).catch(() => { setTopCards([]); setLoading(false); });
+  }, [box]);
   if (!box) return null;
   const diff = box.weekDiff || 0, dc = diff > 0 ? "#16a34a" : diff < 0 ? "#dc2626" : "#aaa";
   const st = stS(box.status), accent = brand.accent;
