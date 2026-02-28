@@ -181,8 +181,7 @@ const useBoxData = (brand) => {
     setLoading(true); setBoxes(null);
     (async () => {
       try {
-        const bf = brand !== "pokemon" ? `&brand=eq.${brand}` : "";
-        const [raw, prices] = await Promise.all([sbFetch(`boxes?select=id,name,snkrdunk_id,status,image_url,release_date,is_hidden,manual_price,brand&snkrdunk_id=not.is.null&order=release_date.desc.nullslast${bf}`), (() => { const d = new Date(); d.setDate(d.getDate() - 400); return sbFetchAll(`box_prices?select=box_id,date,price&date=gte.${d.toISOString().split('T')[0]}&order=date.desc`); })()]);
+        const [raw, prices] = await Promise.all([sbFetch(`boxes?select=id,name,snkrdunk_id,status,image_url,release_date,is_hidden,manual_price&snkrdunk_id=not.is.null&order=release_date.desc.nullslast`), (() => { const d = new Date(); d.setDate(d.getDate() - 400); return sbFetchAll(`box_prices?select=box_id,date,price&date=gte.${d.toISOString().split('T')[0]}&order=date.desc`); })()]);
         if (!Array.isArray(raw)) { setBoxes([]); setLoading(false); return; }
         const pm = {}; prices.forEach(p => { if (!pm[p.box_id]) pm[p.box_id] = []; pm[p.box_id].push(p); });
         setBoxes(raw.filter(b => !b.is_hidden).map(b => {
