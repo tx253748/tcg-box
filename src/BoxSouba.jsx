@@ -178,17 +178,19 @@ const BoxRow = ({ b, isLast, onSelect }) => {
         <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
         <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 1 }}>
             <span style={{ fontSize: 13, color: "#ccc" }}>{fmtDate(b.release)}</span>
-            <TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} />
+            {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</span> : null; })()}
           </div>
         </div>
       </div>
-      <div style={{ width: 85, textAlign: "right", flexShrink: 0 }}>
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
         <div style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
-        {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <div style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</div> : null; })()}
       </div>
       <div style={{ width: 18, flexShrink: 0, textAlign: "center" }}><span style={{ color: hov ? "#999" : "#ddd", fontSize: 15 }}>{"\u203a"}</span></div>
+    </div>
+    <div className="box-row-trend" style={{ marginTop: 4, paddingTop: 4, paddingLeft: 48, borderTop: "1px solid #f0f0f0" }}>
+      <TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} />
     </div>
   </div>;
 };
@@ -396,12 +398,12 @@ export default function BoxSoubaApp() {
   const all = live || [];
   const [q, setQ] = useState(""), [qOpen, setQOpen] = useState(false), [view, setView] = useState("grid"), [fOpen, setFOpen] = useState(false);
   const [period, setPeriod] = useState("week"), [dir, setDir] = useState("all"), [sort, setSort] = useState("release_date");
-  const [pMin, setPMin] = useState(""), [pMax, setPMax] = useState(""), [yMin, setYMin] = useState(""), [yMax, setYMax] = useState(""), [hideNP, setHideNP] = useState(true);
+  const [pMin, setPMin] = useState(""), [pMax, setPMax] = useState(""), [yMin, setYMin] = useState(""), [yMax, setYMax] = useState(""), [hideNP, setHideNP] = useState(true), [noRelease, setNoRelease] = useState(false);
   const lastUp = useMemo(() => { let l = null; all.forEach(b => { if (b.lastDate && (!l || b.lastDate > l)) l = b.lastDate; }); return l; }, [all]);
   const hasF = dir !== "all" || pMin || pMax || yMin || yMax;
   const fCnt = [dir !== "all", !!pMin || !!pMax, !!yMin || !!yMax].filter(Boolean).length;
   const filtered = useMemo(() => {
-    let list = [...all]; if (hideNP) list = list.filter(b => b.current); if (q.trim()) { const lw = q.trim().toLowerCase(); list = list.filter(b => b.name.toLowerCase().includes(lw)); }
+    let list = [...all]; if (hideNP) list = list.filter(b => b.current); if (noRelease) list = list.filter(b => !b.release); if (q.trim()) { const lw = q.trim().toLowerCase(); list = list.filter(b => b.name.toLowerCase().includes(lw)); }
     const pc = b => gP(b, period);
     if (dir === "up") list = list.filter(b => (pc(b) || 0) > 0); if (dir === "down") list = list.filter(b => (pc(b) || 0) < 0);
     if (pMin) list = list.filter(b => b.current >= parseInt(pMin)); if (pMax) list = list.filter(b => b.current <= parseInt(pMax));
@@ -416,7 +418,7 @@ export default function BoxSoubaApp() {
   if (page === "admin") return <AdminPage onBack={() => setPage("main")} />;
 
   return <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", fontFamily: "'Inter','Noto Sans JP','Helvetica Neue',-apple-system,sans-serif", color: "#111" }}>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box}body{margin:0}@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}}`}</style>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box}body{margin:0}@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}.box-row-trend{padding-left:0!important}}`}</style>
     <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 48 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 21, fontWeight: 900, letterSpacing: "-.5px" }}>{"\ud83d\udce6"} BOX{"\u76f8\u5834"}AI</span><span style={{ fontSize: 13, fontWeight: 700, color: "#fff", backgroundColor: "#EAB308", padding: "2px 6px", borderRadius: 4 }}>BETA</span></div>
