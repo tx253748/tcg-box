@@ -20,7 +20,7 @@ const buildSpark = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date.lo
 
 const stS = s => ({ "\u767a\u58f2\u524d": { c: "#2563eb", b: "#eff6ff", d: "#bfdbfe" }, "\u8ca9\u58f2\u4e2d": { c: "#16a34a", b: "#f0fdf4", d: "#bbf7d0" }, "\u8ca9\u58f2\u7d42\u4e86": { c: "#9ca3af", b: "#f9fafb", d: "#e5e7eb" } }[s] || { c: "#888", b: "#f5f5f5", d: "#eee" });
 const Tag = ({ children, st }) => <span style={{ fontSize: 11, fontWeight: 500, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap" }}>{children}</span>;
-const TA = ({ d }) => !d ? <span style={{ color: "#ddd", fontSize: 13 }}>{"\u2014"}</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: 13, fontWeight: 700 }}>{"\u2191"}</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: 13, fontWeight: 700 }}>{"\u2193"}</span> : <span style={{ color: "#aaa", fontSize: 13 }}>{"\u2192"}</span>;
+const TA = ({ d }) => !d ? <span style={{ color: "#ddd", fontSize: 13 }}>—</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: 13, fontWeight: 700 }}>↗</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: 13, fontWeight: 700 }}>↘</span> : <span style={{ color: "#aaa", fontSize: 13 }}>→</span>;
 const TG = ({ a, b, c, e, pa, pb, pc, pe }) => <div style={{ display: "flex", gap: 3 }}>{[[e, pe], [c, pc], [b, pb], [a, pa]].map(([d, pct], i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 26 }}><TA d={d} />{pct != null && <span style={{ fontSize: 8, color: d === "up" ? "#16a34a" : d === "down" ? "#dc2626" : "#bbb", fontWeight: 600, lineHeight: 1, marginTop: 1 }}>{Math.abs(Math.round(pct))}</span>}</div>)}</div>;
 const pill = (a) => ({ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 16, cursor: "pointer", fontFamily: "inherit", transition: "all .12s", border: "1px solid", backgroundColor: a ? "#111" : "#fff", color: a ? "#fff" : "#888", borderColor: a ? "#111" : "#eee" });
 const rIn = { fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "1px solid #e5e5e5", outline: "none", fontFamily: "inherit", width: 80, boxSizing: "border-box", backgroundColor: "#fff", fontVariantNumeric: "tabular-nums" };
@@ -87,20 +87,32 @@ const BoxDetail = ({ box, onClose }) => {
             </div>
             {box.spark && <div style={{ marginTop: 10 }}><Spark data={box.spark} h={48} color={diff >= 0 ? "#16a34a" : "#dc2626"} /></div>}
           </div>
+          {/* 収録カード相場 */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>{"\ud83c\udfc6"} TOP{"\u30ab\u30fc\u30c9"}</div>
-            {loading ? <div style={{ textAlign: "center", padding: 20, color: "#bbb", fontSize: 12 }}>{"\u8aad\u307f\u8fbc\u307f\u4e2d\u2026"}</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#333" }}>収録カード相場</div>
+              <div style={{ fontSize: 10, color: "#bbb" }}>相場順</div>
+            </div>
+            {loading ? <div style={{ textAlign: "center", padding: 20, color: "#bbb", fontSize: 12 }}>読み込み中…</div>
               : topCards?.length > 0 ? <>
-                {topCards.map(c => <div key={c.rank} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
-                  <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: "#EAB30820", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#EAB308" }}>{c.rank}</div>
-                  {c.image_url && <img src={c.image_url} alt="" style={{ width: 32, height: 44, objectFit: "cover", borderRadius: 3, border: "1px solid #eee" }} />}
-                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.card_name}</div><div style={{ fontSize: 10, color: "#aaa" }}>{c.rarity} {"\u30fb"} {"\u5c01\u5165\u7387"} {(c.probability * 100).toFixed(1)}%</div></div>
-                  <div style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{"\u00a5"}{c.card_price?.toLocaleString()}</div>
+                {topCards.map((c, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < topCards.length - 1 ? "1px solid #f0f0f0" : "none", minHeight: 48 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, border: "1px solid #eee", backgroundColor: "#f9f9f9" }}>
+                    {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>{c.card_name}</div>
+                    <div style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>{c.rarity} · 封入率{(c.probability * 100).toFixed(1)}%</div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.3 }}>¥{c.card_price?.toLocaleString()}</div>
+                  </div>
                 </div>)}
-              </> : <div style={{ textAlign: "center", padding: 20, color: "#ccc", fontSize: 12 }}>{"\u30ab\u30fc\u30c9\u30c7\u30fc\u30bf\u672a\u767b\u9332"}</div>}
+              </> : <div style={{ textAlign: "center", padding: 20, color: "#ccc", fontSize: 12 }}>カードデータ未登録</div>}
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "11px 0", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none", ...(i === 0 ? { backgroundColor: "#111", color: "#fff" } : { backgroundColor: "#fff", color: "#111", border: "1px solid #e5e5e5" }) }}>{l.name === "\u30b9\u30cb\u30c0\u30f3" ? "\ud83d\udc5f" : "\ud83d\udd34"} {l.name}</a>)}
+
+          {/* Buy — 軽いテキストリンク */}
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", padding: "8px 0" }}>
+            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#888", textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>{l.name} <span style={{ fontSize: 11 }}>↗</span></a>)}
           </div>
         </div>
       </div>
