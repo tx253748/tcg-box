@@ -9,8 +9,8 @@ CREATE INDEX IF NOT EXISTS idx_boxes_brand ON boxes(brand);
 
 CREATE TABLE IF NOT EXISTS box_top_cards (
   id BIGSERIAL PRIMARY KEY,
-  box_id BIGINT REFERENCES boxes(id) ON DELETE CASCADE,
-  featured_card_id UUID REFERENCES featured_cards(id) ON DELETE CASCADE,
+  box_id UUID REFERENCES boxes(id) ON DELETE CASCADE,
+  featured_card_id BIGINT REFERENCES featured_cards(id) ON DELETE CASCADE,
   rank INTEGER NOT NULL DEFAULT 1,
   probability NUMERIC(6,4) NOT NULL DEFAULT 0,
   UNIQUE(box_id, rank)
