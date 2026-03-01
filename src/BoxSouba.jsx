@@ -158,11 +158,12 @@ const BoxGridCard = ({ b, onSelect }) => {
     <div style={{ position: "relative" }}><img src={b.img} alt={b.name} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />{b.status && b.status !== "\u2014" && <div style={{ position: "absolute", top: 6, left: 6 }}><Tag st={st}>{b.status}</Tag></div>}</div>
     <div style={{ padding: "8px 10px" }}>
       <div style={{ fontSize: 16, fontWeight: 600, color: "#222", lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
-      <div style={{ fontSize: 14, color: "#ccc", marginBottom: 6 }}>{fmtDate(b.release) || ""}</div>
+      <div style={{ fontSize: 14, color: "#ccc", marginBottom: 4 }}>{fmtDate(b.release) || ""}</div>
       <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 5, textAlign: "center" }}>
         <div style={{ fontSize: 21, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
         {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <div style={{ fontSize: 14, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</div> : null; })()}
       </div>
+      <div style={{ display: "flex", gap: 2, justifyContent: "center", marginTop: 4 }}>{[["12M", b.t12, b.pct12], ["6M", b.t6, b.pct6], ["3M", b.t3, b.pct3], ["1M", b.t1, b.pct1]].map(([l, t, p]) => <div key={l} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 26 }}><span style={{ fontSize: 10, color: "#ccc" }}>{l}</span><TA d={t} sz={12} />{p != null && <span style={{ fontSize: 10, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 600 }}>{Math.abs(Math.round(p))}</span>}</div>)}</div>
     </div>
   </div>;
 };
@@ -175,7 +176,13 @@ const BoxRow = ({ b, isLast, onSelect }) => {
     <div style={{ display: "flex", alignItems: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
         <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div><div style={{ fontSize: 15, color: "#ccc", fontVariantNumeric: "tabular-nums", marginTop: 1 }}>{fmtDate(b.release)}</div></div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 13, color: "#ccc" }}>{fmtDate(b.release)}</span>
+            <TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} />
+          </div>
+        </div>
       </div>
       <div style={{ width: 85, textAlign: "right", flexShrink: 0 }}>
         <div style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
@@ -387,8 +394,8 @@ export default function BoxSoubaApp() {
   const [sel, setSel] = useState(null);
   const { boxes: live, loading } = useBoxData();
   const all = live || [];
-  const [q, setQ] = useState(""), [view, setView] = useState("grid"), [fOpen, setFOpen] = useState(false);
-  const [period, setPeriod] = useState("week"), [dir, setDir] = useState("all"), [sort, setSort] = useState("change");
+  const [q, setQ] = useState(""), [qOpen, setQOpen] = useState(false), [view, setView] = useState("grid"), [fOpen, setFOpen] = useState(false);
+  const [period, setPeriod] = useState("week"), [dir, setDir] = useState("all"), [sort, setSort] = useState("release_date");
   const [pMin, setPMin] = useState(""), [pMax, setPMax] = useState(""), [yMin, setYMin] = useState(""), [yMax, setYMax] = useState(""), [hideNP, setHideNP] = useState(true);
   const lastUp = useMemo(() => { let l = null; all.forEach(b => { if (b.lastDate && (!l || b.lastDate > l)) l = b.lastDate; }); return l; }, [all]);
   const hasF = dir !== "all" || pMin || pMax || yMin || yMax;
@@ -422,25 +429,31 @@ export default function BoxSoubaApp() {
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 14px 60px", width: "100%" }}>
       {loading && <div style={{ textAlign: "center", padding: "48px 16px", color: "#aaa", fontSize: 16 }}>{"\ud83d\udce6"} {"\u8aad\u307f\u8fbc\u307f\u4e2d\u2026"}</div>}
       {!loading && <>
-        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-          <div style={{ flex: 1, position: "relative" }}><span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: "#bbb" }}>{"\ud83d\udd0d"}</span><input value={q} onChange={e => setQ(e.target.value)} placeholder={"BOX\u540d\u3067\u691c\u7d22\u2026"} style={{ fontSize: 16, padding: "8px 8px 8px 32px", borderRadius: 6, border: "1px solid #eee", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }} />{q && <button onClick={() => setQ("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#bbb" }}>{"\u2715"}</button>}</div>
-          <button onClick={() => setFOpen(!fOpen)} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 16, fontWeight: 600, padding: "7px 12px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit", border: "1px solid", flexShrink: 0, backgroundColor: hasF ? "#111" : "#fff", color: hasF ? "#fff" : "#666", borderColor: hasF ? "#111" : "#eee" }}>{"\u7d5e\u308a\u8fbc\u307f"}{fCnt > 0 ? ` (${fCnt})` : ""} <span style={{ transform: fOpen ? "rotate(180deg)" : "none", transition: "transform .2s", display: "inline-block" }}>{"\u25be"}</span></button>
+        {/* 検索展開時 */}
+        {qOpen && <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+          <div style={{ flex: 1, position: "relative" }}><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder={"BOX名で検索…"} style={{ fontSize: 16, padding: "8px 32px 8px 12px", borderRadius: 6, border: "1px solid #eee", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }} /><button onClick={() => { setQ(""); setQOpen(false); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#bbb" }}>✕</button></div>
+        </div>}
+        {/* メインツールバー: ソート | 表示切替 | 絞り込み | 検索 */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}>{[["release_date", "発売日"], ["change", "変動率"], ["price", "価格"]].map(([k, l]) => <button key={k} onClick={() => setSort(k)} style={pill(sort === k)}>{l}</button>)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <button onClick={() => setQOpen(!qOpen)} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: qOpen || q ? "#111" : "#fff", color: qOpen || q ? "#fff" : "#aaa", borderColor: qOpen || q ? "#111" : "#eee" }}>🔍</button>
+            <button onClick={() => setFOpen(!fOpen)} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: hasF ? "#111" : "#fff", color: hasF ? "#fff" : "#aaa", borderColor: hasF ? "#111" : "#eee" }}>{hasF ? `${fCnt}` : "⊘"}</button>
+            <button onClick={() => setView("list")} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: view === "list" ? "#111" : "#fff", color: view === "list" ? "#fff" : "#aaa", borderColor: view === "list" ? "#111" : "#eee" }}>☰</button>
+            <button onClick={() => setView("grid")} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: view === "grid" ? "#111" : "#fff", color: view === "grid" ? "#fff" : "#aaa", borderColor: view === "grid" ? "#111" : "#eee" }}>⊞</button>
+          </div>
         </div>
         {fOpen && <div style={{ padding: "8px 10px", backgroundColor: "#fafafa", border: "1px solid #f0f0f0", borderRadius: 8, marginBottom: 6 }}>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
-            <div><div style={{ fontSize: 15, color: "#999", marginBottom: 3 }}>{"\u671f\u9593"}</div><div style={{ display: "flex", gap: 3 }}>{[["week", "\u524d\u9031\u6bd4"], ["1m", "1M"], ["3m", "3M"], ["6m", "6M"], ["12m", "12M"]].map(([k, l]) => <button key={k} onClick={() => setPeriod(k)} style={pill(period === k)}>{l}</button>)}</div></div>
-            <div><div style={{ fontSize: 15, color: "#999", marginBottom: 3 }}>{"\u65b9\u5411"}</div><div style={{ display: "flex", gap: 3 }}>{[["all", "\u5168\u3066"], ["up", "\u2191 \u4e0a\u6607"], ["down", "\u2193 \u4e0b\u843d"]].map(([k, l]) => <button key={k} onClick={() => setDir(k)} style={pill(dir === k)}>{l}</button>)}</div></div>
+            <div><div style={{ fontSize: 14, color: "#999", marginBottom: 3 }}>期間</div><div style={{ display: "flex", gap: 3 }}>{[["week", "前週比"], ["1m", "1M"], ["3m", "3M"], ["6m", "6M"], ["12m", "12M"]].map(([k, l]) => <button key={k} onClick={() => setPeriod(k)} style={pill(period === k)}>{l}</button>)}</div></div>
+            <div><div style={{ fontSize: 14, color: "#999", marginBottom: 3 }}>方向</div><div style={{ display: "flex", gap: 3 }}>{[["all", "全て"], ["up", "↗ 上昇"], ["down", "↘ 下落"]].map(([k, l]) => <button key={k} onClick={() => setDir(k)} style={pill(dir === k)}>{l}</button>)}</div></div>
           </div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
-            <div><div style={{ fontSize: 15, color: "#999", marginBottom: 3 }}>{"\u4fa1\u683c"}</div><div style={{ display: "flex", alignItems: "center", gap: 4 }}><input value={pMin} onChange={e => setPMin(e.target.value.replace(/\D/g, ""))} placeholder={"\u00a5 \u4e0b\u9650"} style={rIn} /><span style={{ fontSize: 16, color: "#ccc" }}>{"\u301c"}</span><input value={pMax} onChange={e => setPMax(e.target.value.replace(/\D/g, ""))} placeholder={"\u00a5 \u4e0a\u9650"} style={rIn} /></div></div>
-            <div><div style={{ fontSize: 15, color: "#999", marginBottom: 3 }}>{"\u767a\u58f2\u5e74"}</div><div style={{ display: "flex", alignItems: "center", gap: 4 }}><input value={yMin} onChange={e => setYMin(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="2023" style={{ ...rIn, width: 72 }} /><span style={{ fontSize: 16, color: "#ccc" }}>{"\u301c"}</span><input value={yMax} onChange={e => setYMax(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="2026" style={{ ...rIn, width: 72 }} /></div></div>
+            <div><div style={{ fontSize: 14, color: "#999", marginBottom: 3 }}>価格</div><div style={{ display: "flex", alignItems: "center", gap: 4 }}><input value={pMin} onChange={e => setPMin(e.target.value.replace(/\D/g, ""))} placeholder={"¥ 下限"} style={rIn} /><span style={{ fontSize: 15, color: "#ccc" }}>〜</span><input value={pMax} onChange={e => setPMax(e.target.value.replace(/\D/g, ""))} placeholder={"¥ 上限"} style={rIn} /></div></div>
+            <div><div style={{ fontSize: 14, color: "#999", marginBottom: 3 }}>発売年</div><div style={{ display: "flex", alignItems: "center", gap: 4 }}><input value={yMin} onChange={e => setYMin(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="2023" style={{ ...rIn, width: 72 }} /><span style={{ fontSize: 15, color: "#ccc" }}>〜</span><input value={yMax} onChange={e => setYMax(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="2026" style={{ ...rIn, width: 72 }} /></div></div>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}><input type="checkbox" checked={hideNP} onChange={e => setHideNP(e.target.checked)} style={{ accentColor: "#111" }} /><span style={{ fontSize: 16, color: "#888" }}>{"\u4fa1\u683c\u306a\u3057\u975e\u8868\u793a"}</span></label><div style={{ display: "flex", alignItems: "center", gap: 8 }}>{hasF && <button onClick={clearF} style={{ fontSize: 15, color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>{"\u00d7"} {"\u30ea\u30bb\u30c3\u30c8"}</button>}<span style={{ fontSize: 16, color: "#bbb" }}>{filtered.length}{"\u4ef6"}</span></div></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}><input type="checkbox" checked={hideNP} onChange={e => setHideNP(e.target.checked)} style={{ accentColor: "#111" }} /><span style={{ fontSize: 15, color: "#888" }}>価格なし非表示</span></label><div style={{ display: "flex", alignItems: "center", gap: 8 }}>{hasF && <button onClick={clearF} style={{ fontSize: 14, color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>× リセット</button>}<span style={{ fontSize: 15, color: "#bbb" }}>{filtered.length}件</span></div></div>
         </div>}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0", marginBottom: 6 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 15, color: "#aaa", fontWeight: 700 }}>{"\u4e26\u3073\u66ff\u3048"}</span><div style={{ display: "flex", gap: 3 }}>{[["change", "\u5909\u52d5\u7387"], ["price", "\u4fa1\u683c"], ["release_date", "\u767a\u58f2\u65e5"]].map(([k, l]) => <button key={k} onClick={() => setSort(k)} style={pill(sort === k)}>{l}</button>)}</div></div>
-          <div style={{ display: "flex", gap: 2 }}><button onClick={() => setView("list")} style={{ width: 28, height: 28, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: view === "list" ? "#111" : "#fff", color: view === "list" ? "#fff" : "#aaa", borderColor: view === "list" ? "#111" : "#eee" }}>{"\u2630"}</button><button onClick={() => setView("grid")} style={{ width: 28, height: 28, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: view === "grid" ? "#111" : "#fff", color: view === "grid" ? "#fff" : "#aaa", borderColor: view === "grid" ? "#111" : "#eee" }}>{"\u229e"}</button></div>
-        </div>
         {view === "grid" ? <div className="box-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>{filtered.map(b => <BoxGridCard key={b.id} b={b} onSelect={setSel} />)}</div>
           : <><ListHeader />{filtered.map((b, i) => <BoxRow key={b.id} b={b} isLast={i === filtered.length - 1} onSelect={setSel} />)}</>}
         {!filtered.length && <div style={{ textAlign: "center", padding: "32px 16px", color: "#ccc", fontSize: 16 }}>{"\u8a72\u5f53\u3059\u308bBOX\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093"}</div>}
