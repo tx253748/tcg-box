@@ -21,8 +21,8 @@ const buildSparkRaw = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date
 
 const stS = s => ({ "\u767a\u58f2\u524d": { c: "#2563eb", b: "#eff6ff", d: "#bfdbfe" }, "\u8ca9\u58f2\u4e2d": { c: "#16a34a", b: "#f0fdf4", d: "#bbf7d0" }, "\u8ca9\u58f2\u7d42\u4e86": { c: "#9ca3af", b: "#f9fafb", d: "#e5e7eb" } }[s] || { c: "#888", b: "#f5f5f5", d: "#eee" });
 const Tag = ({ children, st }) => <span style={{ fontSize: 15, fontWeight: 500, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap" }}>{children}</span>;
-const TA = ({ d }) => !d ? <span style={{ color: "#ddd", fontSize: 16 }}>—</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: 16, fontWeight: 700 }}>↗</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: 16, fontWeight: 700 }}>↘</span> : <span style={{ color: "#aaa", fontSize: 16 }}>→</span>;
-const TG = ({ a, b, c, e, pa, pb, pc, pe }) => <div style={{ display: "flex", gap: 3 }}>{[[e, pe], [c, pc], [b, pb], [a, pa]].map(([d, pct], i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 28 }}><TA d={d} />{pct != null && <span style={{ fontSize: 13, color: d === "up" ? "#16a34a" : d === "down" ? "#dc2626" : "#bbb", fontWeight: 600, lineHeight: 1, marginTop: 1 }}>{Math.abs(Math.round(pct))}</span>}</div>)}</div>;
+const TA = ({ d, sz = 14 }) => !d ? <span style={{ color: "#ddd", fontSize: sz }}>—</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: sz, fontWeight: 700 }}>↗</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: sz, fontWeight: 700 }}>↘</span> : <span style={{ color: "#aaa", fontSize: sz }}>→</span>;
+const TG = ({ a, b, c, e, pa, pb, pc, pe }) => <div style={{ display: "flex", gap: 2 }}>{[[e, pe], [c, pc], [b, pb], [a, pa]].map(([d, pct], i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 24 }}><TA d={d} sz={13} />{pct != null && <span style={{ fontSize: 10, color: d === "up" ? "#16a34a" : d === "down" ? "#dc2626" : "#bbb", fontWeight: 600, lineHeight: 1, marginTop: 1 }}>{Math.abs(Math.round(pct))}</span>}</div>)}</div>;
 const pill = (a) => ({ fontSize: 16, fontWeight: 600, padding: "5px 12px", borderRadius: 16, cursor: "pointer", fontFamily: "inherit", transition: "all .12s", border: "1px solid", backgroundColor: a ? "#111" : "#fff", color: a ? "#fff" : "#888", borderColor: a ? "#111" : "#eee" });
 const rIn = { fontSize: 16, padding: "6px 8px", borderRadius: 6, border: "1px solid #e5e5e5", outline: "none", fontFamily: "inherit", width: 85, boxSizing: "border-box", backgroundColor: "#fff", fontVariantNumeric: "tabular-nums" };
 const gP = (b, p) => { if (p === "week") { const pv = b.current - (b.weekDiff || 0); return pv > 0 && b.weekDiff != null ? Math.round((b.weekDiff / pv) * 100) : null; } const k = { "1m": "pct1", "3m": "pct3", "6m": "pct6", "12m": "pct12" }[p]; return b[k] != null ? Math.round(b[k]) : null; };
@@ -107,7 +107,7 @@ const BoxDetail = ({ box, onClose }) => {
           {/* トレンド + スパークライン */}
           <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
             <div style={{ display: "flex", gap: 0 }}>
-              {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 14, color: "#999", marginBottom: 1, fontWeight: 600 }}>{l}</div><TA d={t} />{p != null && <div style={{ fontSize: 14, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
+              {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, color: "#999", marginBottom: 1, fontWeight: 600 }}>{l}</div><TA d={t} sz={14} />{p != null && <div style={{ fontSize: 12, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
             </div>
             {(() => {
               const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 365);
@@ -157,7 +157,7 @@ const BoxGridCard = ({ b, onSelect }) => {
     <div style={{ padding: "8px 10px" }}>
       <div style={{ fontSize: 16, fontWeight: 600, color: "#222", lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
       <div style={{ fontSize: 14, color: "#ccc", marginBottom: 6 }}>{b.release?.replace(/-/g, ".") || ""}</div>
-      <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 4 }}>{[["12M", b.t12, b.pct12], ["6M", b.t6, b.pct6], ["3M", b.t3, b.pct3], ["1M", b.t1, b.pct1]].map(([l, t, p]) => <div key={l} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 30 }}><span style={{ fontSize: 13, color: "#ccc" }}>{l}</span><TA d={t} />{p != null && <span style={{ fontSize: 13, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 600 }}>{Math.abs(Math.round(p))}</span>}</div>)}</div>
+      <div style={{ display: "flex", gap: 2, justifyContent: "center", marginBottom: 4 }}>{[["12M", b.t12, b.pct12], ["6M", b.t6, b.pct6], ["3M", b.t3, b.pct3], ["1M", b.t1, b.pct1]].map(([l, t, p]) => <div key={l} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 26 }}><span style={{ fontSize: 10, color: "#ccc" }}>{l}</span><TA d={t} sz={12} />{p != null && <span style={{ fontSize: 10, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 600 }}>{Math.abs(Math.round(p))}</span>}</div>)}</div>
       <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 5, textAlign: "center" }}>
         <div style={{ fontSize: 21, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
         {b.weekDiff != null && (() => { const pv = b.current - b.weekDiff, pc = pv > 0 ? Math.round((b.weekDiff / pv) * 100) : 0; return <div style={{ fontSize: 15, fontWeight: 600, color: wc, fontVariantNumeric: "tabular-nums" }}>{"\u524d\u9031\u6bd4"} {b.weekDiff > 0 ? "+" : ""}{b.weekDiff.toLocaleString()} ({pc > 0 ? "+" : ""}{pc}%)</div>; })()}
@@ -173,7 +173,7 @@ const BoxRow = ({ b, isLast, onSelect }) => {
     style={{ padding: "8px 10px", borderBottom: isLast ? "none" : "1px solid #f5f5f5", borderRadius: hv ? 8 : 0, backgroundColor: hov ? "#fafafa" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .12s" }}>
     <div style={{ display: "flex", alignItems: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
-        <img src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+        <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
         <div style={{ minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div><div style={{ fontSize: 15, color: "#ccc", fontVariantNumeric: "tabular-nums", marginTop: 1 }}>{b.release?.replace(/-/g, ".") || ""}</div></div>
       </div>
       <div style={{ flexShrink: 0 }}><TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} /></div>
@@ -186,7 +186,7 @@ const BoxRow = ({ b, isLast, onSelect }) => {
   </div>;
 };
 
-const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 15, color: "#bbb", flex: 1 }}>{"\u5546\u54c1\u540d"}</span><div style={{ display: "flex", gap: 3, flexShrink: 0 }}>{["12M", "6M", "3M", "1M"].map(l => <span key={l} style={{ fontSize: 14, color: "#ccc", width: 28, textAlign: "center" }}>{l}</span>)}</div><div style={{ width: 85, textAlign: "right", flexShrink: 0 }}><span style={{ fontSize: 15, color: "#bbb" }}>{"\u4fa1\u683c"}</span></div><span style={{ width: 18 }} /></div>;
+const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 15, color: "#bbb", flex: 1 }}>{"\u5546\u54c1\u540d"}</span><div style={{ display: "flex", gap: 2, flexShrink: 0 }}>{["12M", "6M", "3M", "1M"].map(l => <span key={l} style={{ fontSize: 10, color: "#ccc", width: 24, textAlign: "center" }}>{l}</span>)}</div><div style={{ width: 85, textAlign: "right", flexShrink: 0 }}><span style={{ fontSize: 15, color: "#bbb" }}>{"\u4fa1\u683c"}</span></div><span style={{ width: 18 }} /></div>;
 
 const useBoxData = () => {
   const [boxes, setBoxes] = useState(null), [loading, setLoading] = useState(true);
@@ -408,8 +408,8 @@ export default function BoxSoubaApp() {
 
   if (page === "admin") return <AdminPage onBack={() => setPage("main")} />;
 
-  return <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", fontFamily: "'Noto Sans JP','Helvetica Neue',-apple-system,sans-serif", color: "#111" }}>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box}body{margin:0}@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}}`}</style>
+  return <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", fontFamily: "'Inter','Noto Sans JP','Helvetica Neue',-apple-system,sans-serif", color: "#111" }}>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box}body{margin:0}@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}}`}</style>
     <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 48 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 21, fontWeight: 900, letterSpacing: "-.5px" }}>{"\ud83d\udce6"} BOX{"\u76f8\u5834"}AI</span><span style={{ fontSize: 13, fontWeight: 700, color: "#fff", backgroundColor: "#EAB308", padding: "2px 6px", borderRadius: 4 }}>BETA</span></div>
