@@ -21,7 +21,7 @@ const buildSparkRaw = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date
 
 const stS = s => ({ "\u767a\u58f2\u524d": { c: "#2563eb", b: "#eff6ff", d: "#bfdbfe" }, "\u8ca9\u58f2\u4e2d": { c: "#16a34a", b: "#f0fdf4", d: "#bbf7d0" }, "\u8ca9\u58f2\u7d42\u4e86": { c: "#9ca3af", b: "#f9fafb", d: "#e5e7eb" } }[s] || { c: "#888", b: "#f5f5f5", d: "#eee" });
 const fmtDate = (d) => { if (!d) return ""; const [y, m, dd] = d.split("-"); return `${y}.${parseInt(m)}.${parseInt(dd)}発売`; };
-const fmtDiff = (diff, current) => { if (diff == null) return null; const pv = current - diff; const pc = pv > 0 ? Math.round((diff / pv) * 100) : 0; const sign = diff > 0 ? "+" : ""; const arrow = diff > 0 ? "↗" : diff < 0 ? "↘" : "→"; const col = diff > 0 ? "#16a34a" : diff < 0 ? "#dc2626" : "#aaa"; return { text: `${arrow} ${sign}${diff.toLocaleString()} (${sign}${pc}%)`, col }; };
+const fmtDiff = (diff, current) => { if (diff == null) return null; const pv = current - diff; const pc = pv > 0 ? Math.round((diff / pv) * 100) : 0; const sign = diff > 0 ? "+" : ""; const col = diff > 0 ? "#16a34a" : diff < 0 ? "#dc2626" : "#aaa"; return { text: `${sign}${diff.toLocaleString()} (${sign}${pc}%)`, col }; };
 const Tag = ({ children, st }) => <span style={{ fontSize: 15, fontWeight: 500, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap" }}>{children}</span>;
 const TA = ({ d, sz = 14 }) => !d ? <span style={{ color: "#ddd", fontSize: sz }}>—</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: sz, fontWeight: 700 }}>↗</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: sz, fontWeight: 700 }}>↘</span> : <span style={{ color: "#aaa", fontSize: sz }}>→</span>;
 const TG = ({ a, b, c, e, pa, pb, pc, pe }) => <div style={{ display: "flex", gap: 2 }}>{[[e, pe], [c, pc], [b, pb], [a, pa]].map(([d, pct], i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 24 }}><TA d={d} sz={13} />{pct != null && <span style={{ fontSize: 10, color: d === "up" ? "#16a34a" : d === "down" ? "#dc2626" : "#bbb", fontWeight: 600, lineHeight: 1, marginTop: 1 }}>{Math.abs(Math.round(pct))}</span>}</div>)}</div>;
@@ -106,17 +106,14 @@ const BoxDetail = ({ box, onClose }) => {
           </div>
         </div>
         <div style={{ padding: "6px 12px 12px" }}>
-          {/* トレンド + スパークライン */}
-          <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
-            <div style={{ display: "flex", gap: 0 }}>
-              {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, color: "#999", marginBottom: 1, fontWeight: 600 }}>{l}</div><TA d={t} sz={14} />{p != null && <div style={{ fontSize: 12, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
-            </div>
+          {/* スパークライン */}
+          <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "6px 10px", marginBottom: 6 }}>
             {(() => {
               const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 365);
               const filtered = box.sparkRaw?.filter(p => new Date(p.date) >= cutoff);
               if (!filtered || filtered.length < 2) return null;
               const col = filtered[filtered.length - 1].price >= filtered[0].price ? "#16a34a" : "#dc2626";
-              return <div style={{ marginTop: 4 }}><SparkDate rawData={filtered} totalDays={365} h={40} color={col} /></div>;
+              return <SparkDate rawData={filtered} totalDays={365} h={40} color={col} />;
             })()}
           </div>
           {/* 収録カード相場 */}
@@ -138,6 +135,11 @@ const BoxDetail = ({ box, onClose }) => {
                   <div style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>¥{c.card_price?.toLocaleString()}</div>
                 </div>)}
               </> : <div style={{ textAlign: "center", padding: 12, color: "#ccc", fontSize: 16 }}>カードデータ未登録</div>}
+          </div>
+
+          {/* トレンド（下部） */}
+          <div style={{ display: "flex", gap: 0, padding: "6px 0", borderTop: "1px solid #f0f0f0", marginBottom: 6 }}>
+            {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, color: "#999", marginBottom: 1, fontWeight: 600 }}>{l}</div><TA d={t} sz={14} />{p != null && <div style={{ fontSize: 12, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
           </div>
 
           {/* Buy Links */}
