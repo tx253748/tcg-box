@@ -62,8 +62,7 @@ const BoxDetail = ({ box, onClose }) => {
   if (!box) return null;
   const diff = box.weekDiff || 0, dc = diff > 0 ? "#16a34a" : diff < 0 ? "#dc2626" : "#aaa";
   const st = stS(box.status);
-  const ev = topCards?.reduce((s, c) => s + (c.card_price * c.probability), 0) || 0;
-  const evS = box.current && ev > 0 ? ((ev / box.current - 1) * 100) : null;
+
 
   return <>
     <div onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", zIndex: 100, backdropFilter: "blur(2px)" }} />
@@ -96,14 +95,8 @@ const BoxDetail = ({ box, onClose }) => {
                   <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: "#EAB30820", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#EAB308" }}>{c.rank}</div>
                   {c.image_url && <img src={c.image_url} alt="" style={{ width: 32, height: 44, objectFit: "cover", borderRadius: 3, border: "1px solid #eee" }} />}
                   <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.card_name}</div><div style={{ fontSize: 10, color: "#aaa" }}>{c.rarity} {"\u30fb"} {"\u5c01\u5165\u7387"} {(c.probability * 100).toFixed(1)}%</div></div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}><div style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{"\u00a5"}{c.card_price?.toLocaleString()}</div><div style={{ fontSize: 9, color: "#16a34a", fontWeight: 600 }}>EV {"\u00a5"}{Math.round(c.card_price * c.probability).toLocaleString()}</div></div>
+                  <div style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{"\u00a5"}{c.card_price?.toLocaleString()}</div>
                 </div>)}
-                <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, backgroundColor: evS > 0 ? "rgba(22,163,74,.06)" : "rgba(220,38,38,.06)", border: `1px solid ${evS > 0 ? "rgba(22,163,74,.15)" : "rgba(220,38,38,.15)"}` }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div><div style={{ fontSize: 10, color: "#888", fontWeight: 600 }}>TOP{"\u671f\u5f85\u5024"} (EV)</div><div style={{ fontSize: 22, fontWeight: 900, color: evS > 0 ? "#16a34a" : "#dc2626", fontVariantNumeric: "tabular-nums" }}>{"\u00a5"}{Math.round(ev).toLocaleString()}</div></div>
-                    <div style={{ textAlign: "right" }}><div style={{ fontSize: 10, color: "#888" }}>vs BOX{"\u4fa1\u683c"}</div><div style={{ fontSize: 16, fontWeight: 800, color: evS > 0 ? "#16a34a" : "#dc2626" }}>{evS != null ? `${evS > 0 ? "+" : ""}${evS.toFixed(1)}%` : "\u2014"}</div></div>
-                  </div>
-                </div>
               </> : <div style={{ textAlign: "center", padding: 20, color: "#ccc", fontSize: 12 }}>{"\u30ab\u30fc\u30c9\u30c7\u30fc\u30bf\u672a\u767b\u9332"}</div>}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
