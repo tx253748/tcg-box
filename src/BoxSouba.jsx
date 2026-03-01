@@ -22,10 +22,10 @@ const buildSparkRaw = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date
 const stS = s => ({ "\u767a\u58f2\u524d": { c: "#2563eb", b: "#eff6ff", d: "#bfdbfe" }, "\u8ca9\u58f2\u4e2d": { c: "#16a34a", b: "#f0fdf4", d: "#bbf7d0" }, "\u8ca9\u58f2\u7d42\u4e86": { c: "#9ca3af", b: "#f9fafb", d: "#e5e7eb" } }[s] || { c: "#888", b: "#f5f5f5", d: "#eee" });
 const fmtDate = (d) => { if (!d) return ""; const [y, m, dd] = d.split("-"); return `${y}.${parseInt(m)}.${parseInt(dd)}発売`; };
 const fmtDiff = (diff, current) => { if (diff == null) return null; const pv = current - diff; const pc = pv > 0 ? Math.round((diff / pv) * 100) : 0; const sign = diff > 0 ? "+" : ""; const col = diff > 0 ? "#16a34a" : diff < 0 ? "#dc2626" : "#aaa"; return { text: `${sign}${diff.toLocaleString()} (${sign}${pc}%)`, col }; };
-const Tag = ({ children, st }) => <span style={{ fontSize: 15, fontWeight: 500, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap" }}>{children}</span>;
+const Tag = ({ children, st }) => <span style={{ fontSize: 12, fontWeight: 600, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap", boxShadow: "0 1px 2px rgba(0,0,0,.04)" }}>{children}</span>;
 const TA = ({ d, sz = 14 }) => !d ? <span style={{ color: "#ddd", fontSize: sz }}>—</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: sz, fontWeight: 700 }}>↗</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: sz, fontWeight: 700 }}>↘</span> : <span style={{ color: "#aaa", fontSize: sz }}>→</span>;
 const TG = ({ a, b, c, e, pa, pb, pc, pe }) => <div style={{ display: "flex", gap: 2 }}>{[[e, pe], [c, pc], [b, pb], [a, pa]].map(([d, pct], i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 24 }}><TA d={d} sz={13} />{pct != null && <span style={{ fontSize: 10, color: d === "up" ? "#16a34a" : d === "down" ? "#dc2626" : "#bbb", fontWeight: 600, lineHeight: 1, marginTop: 1 }}>{Math.abs(Math.round(pct))}</span>}</div>)}</div>;
-const pill = (a) => ({ fontSize: 16, fontWeight: 600, padding: "5px 12px", borderRadius: 16, cursor: "pointer", fontFamily: "inherit", transition: "all .12s", border: "1px solid", backgroundColor: a ? "#111" : "#fff", color: a ? "#fff" : "#888", borderColor: a ? "#111" : "#eee" });
+const pill = (a) => ({ fontSize: 16, fontWeight: 600, padding: "5px 12px", borderRadius: 16, cursor: "pointer", fontFamily: "inherit", transition: "all .18s cubic-bezier(.16,1,.3,1)", border: "1px solid", backgroundColor: a ? "#111" : "#fff", color: a ? "#fff" : "#888", borderColor: a ? "#111" : "#e0e0e0", boxShadow: a ? "0 2px 6px rgba(0,0,0,.12)" : "none" });
 const rIn = { fontSize: 16, padding: "6px 8px", borderRadius: 6, border: "1px solid #e5e5e5", outline: "none", fontFamily: "inherit", width: 85, boxSizing: "border-box", backgroundColor: "#fff", fontVariantNumeric: "tabular-nums" };
 const gP = (b, p) => { if (p === "week") { const pv = b.current - (b.weekDiff || 0); return pv > 0 && b.weekDiff != null ? Math.round((b.weekDiff / pv) * 100) : null; } const k = { "1m": "pct1", "3m": "pct3", "6m": "pct6", "12m": "pct12" }[p]; return b[k] != null ? Math.round(b[k]) : null; };
 
@@ -86,9 +86,9 @@ const BoxDetail = ({ box, onClose }) => {
 
 
   return <>
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", zIndex: 100, backdropFilter: "blur(2px)" }} />
+    <div className="modal-overlay" onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)", zIndex: 100, backdropFilter: "blur(4px)" }} />
     <div style={{ position: "fixed", inset: 0, zIndex: 101, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "16px 10px", overflow: "auto" }} onClick={onClose}>
-      <div style={{ backgroundColor: "#fff", borderRadius: 14, maxWidth: 460, width: "100%", boxShadow: "0 16px 48px rgba(0,0,0,.15)" }} onClick={e => e.stopPropagation()}>
+      <div className="modal-content" style={{ backgroundColor: "#fff", borderRadius: 16, maxWidth: 460, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.04)" }} onClick={e => e.stopPropagation()}>
         {/* ヘッダー: 左BOX画像 + 右情報 */}
         <div style={{ padding: "10px 12px 0", position: "relative" }}>
           <button onClick={onClose} style={{ position: "absolute", top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: "#f0f0f0", border: "none", color: "#999", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>✕</button>
@@ -141,8 +141,8 @@ const BoxDetail = ({ box, onClose }) => {
           </div>
 
           {/* Buy Links */}
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "4px 0" }}>
-            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 16, fontWeight: 600, color: "#555", textDecoration: "none", padding: "7px 14px", borderRadius: 6, border: "1px solid #eee", backgroundColor: "#fafafa", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f0f0f0"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}><img src={l.icon} alt="" style={{ width: 18, height: 18, borderRadius: 4 }} />{l.name}<span style={{ fontSize: 13, color: "#bbb" }}>↗</span></a>)}
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "6px 0" }}>
+            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 15, fontWeight: 600, color: "#555", textDecoration: "none", padding: "8px 16px", borderRadius: 8, border: "1px solid #e8e8e8", backgroundColor: "#fafafa", transition: "all .2s cubic-bezier(.16,1,.3,1)", boxShadow: "0 1px 3px rgba(0,0,0,.04)" }} onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f0f0f0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.08)"; e.currentTarget.style.transform = "translateY(-1px)"; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#fafafa"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,.04)"; e.currentTarget.style.transform = "translateY(0)"; }}><img src={l.icon} alt="" style={{ width: 20, height: 20, borderRadius: 4 }} />{l.name}<span style={{ fontSize: 12, color: "#bbb" }}>↗</span></a>)}
           </div>
         </div>
       </div>
@@ -152,10 +152,13 @@ const BoxDetail = ({ box, onClose }) => {
 
 const BoxGridCard = ({ b, onSelect }) => {
   const st = stS(b.status), wc = b.weekDiff > 0 ? "#16a34a" : b.weekDiff < 0 ? "#dc2626" : "#aaa";
-  return <div onClick={() => onSelect(b)} style={{ border: "1px solid #eee", borderRadius: 10, overflow: "hidden", transition: "box-shadow .2s, transform .2s", backgroundColor: "#fff", cursor: "pointer" }}
-    onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.06)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
-    <div style={{ position: "relative" }}><img src={b.img} alt={b.name} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />{b.status && b.status !== "\u2014" && <div style={{ position: "absolute", top: 6, left: 6 }}><Tag st={st}>{b.status}</Tag></div>}</div>
+  return <div className="grid-card" onClick={() => onSelect(b)} style={{ border: "1px solid #e8e8e8", borderRadius: 12, overflow: "hidden", transition: "box-shadow .25s, transform .25s", backgroundColor: "#fff", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}
+    onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,.08)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+    onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,.04)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      <img src={b.img} alt={b.name} style={{ width: "100%", height: 140, objectFit: "cover", display: "block", transition: "transform .3s" }} onMouseEnter={e => e.target.style.transform = "scale(1.03)"} onMouseLeave={e => e.target.style.transform = "scale(1)"} />
+      {b.status && b.status !== "\u2014" && <div style={{ position: "absolute", top: 6, left: 6 }}><Tag st={st}>{b.status}</Tag></div>}
+    </div>
     <div style={{ padding: "8px 10px" }}>
       <div style={{ fontSize: 16, fontWeight: 600, color: "#222", lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
       <div style={{ fontSize: 14, color: "#ccc", marginBottom: 4 }}>{fmtDate(b.release) || ""}</div>
@@ -171,8 +174,8 @@ const BoxGridCard = ({ b, onSelect }) => {
 const BoxRow = ({ b, isLast, onSelect }) => {
   const [hov, setHov] = useState(false);
   const st = stS(b.status), hv = b.current >= 15000;
-  return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={() => onSelect(b)}
-    style={{ padding: "8px 10px", borderBottom: isLast ? "none" : "1px solid #f0f0f0", borderRadius: hv ? 8 : 0, backgroundColor: hov ? "#fafafa" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .12s" }}>
+  return <div className="box-row" onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={() => onSelect(b)}
+    style={{ padding: "10px 10px", borderBottom: isLast ? "none" : "1px solid #f0f0f0", borderRadius: hv ? 10 : 0, backgroundColor: hov ? "#f7f7f7" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .15s, box-shadow .2s", boxShadow: hov ? "0 2px 8px rgba(0,0,0,.04)" : "none" }}>
     {/* 上段: 画像 + BOX名 + 価格 */}
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
@@ -184,8 +187,8 @@ const BoxRow = ({ b, isLast, onSelect }) => {
     {/* 下段: 発売日 + 変動 + トレンド */}
     <div className="box-row-trend" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, paddingLeft: 48 }}>
       <span style={{ fontSize: 12, color: "#bbb" }}>{fmtDate(b.release)}</span>
-      {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 12, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</span> : null; })()}
-      <div style={{ marginLeft: "auto" }}><TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} /></div>
+      <TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} />
+      {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 12, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums", marginLeft: "auto" }}>{d.text}</span> : null; })()}
     </div>
   </div>;
 };
@@ -413,34 +416,56 @@ export default function BoxSoubaApp() {
   if (page === "admin") return <AdminPage onBack={() => setPage("main")} />;
 
   return <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", fontFamily: "'Inter','Noto Sans JP','Helvetica Neue',-apple-system,sans-serif", color: "#111" }}>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box}body{margin:0}@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}.box-row-trend{padding-left:0!important}}`}</style>
-    <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 48 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 21, fontWeight: 900, letterSpacing: "-.5px" }}>{"\ud83d\udce6"} BOX{"\u76f8\u5834"}AI</span><span style={{ fontSize: 13, fontWeight: 700, color: "#fff", backgroundColor: "#EAB308", padding: "2px 6px", borderRadius: 4 }}>BETA</span></div>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');
+*{box-sizing:border-box}body{margin:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.fade-up{animation:fadeUp .4s ease both}
+.box-grid .grid-card{animation:fadeUp .4s ease both}
+.box-grid .grid-card:nth-child(2){animation-delay:.05s}
+.box-grid .grid-card:nth-child(3){animation-delay:.1s}
+.box-grid .grid-card:nth-child(4){animation-delay:.15s}
+.box-grid .grid-card:nth-child(n+5){animation-delay:.2s}
+.modal-overlay{animation:fadeIn .2s ease both}
+.modal-content{animation:slideIn .3s cubic-bezier(.16,1,.3,1) both}
+.box-row{animation:fadeUp .35s ease both}
+@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}.box-row-trend{padding-left:0!important}}
+`}</style>
+    <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 3px rgba(0,0,0,.04)", backdropFilter: "blur(12px)", background: "rgba(255,255,255,.92)" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="/icons/logo.png" alt="BOX相場AI" style={{ height: 32, width: "auto", objectFit: "contain" }} onError={e => { e.target.style.display = "none"; }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.5px", background: "linear-gradient(135deg, #111 0%, #444 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>BOX相場AI</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg, #EAB308, #F59E0B)", padding: "2px 7px", borderRadius: 4, letterSpacing: ".5px" }}>BETA</span>
+          </div>
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {lastUp && <span style={{ fontSize: 15, color: "#bbb" }}>{"\u66f4\u65b0"} {lastUp.replace(/-/g, "/")}</span>}
-          <button onClick={() => setPage("admin")} style={{ fontSize: 14, padding: "4px 8px", borderRadius: 4, border: "1px solid #eee", backgroundColor: "#fff", color: "#aaa", cursor: "pointer", fontFamily: "inherit" }}>{"\u2699\ufe0f"}</button>
+          {lastUp && <span style={{ fontSize: 13, color: "#bbb" }}>更新 {lastUp.replace(/-/g, "/")}</span>}
+          <button onClick={() => setPage("admin")} style={{ fontSize: 14, padding: "4px 8px", borderRadius: 4, border: "1px solid #eee", backgroundColor: "#fff", color: "#aaa", cursor: "pointer", fontFamily: "inherit", transition: "all .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f5f5f5"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}>⚙️</button>
         </div>
       </div>
     </header>
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 14px 60px", width: "100%" }}>
-      {loading && <div style={{ textAlign: "center", padding: "48px 16px", color: "#aaa", fontSize: 16 }}>{"\ud83d\udce6"} {"\u8aad\u307f\u8fbc\u307f\u4e2d\u2026"}</div>}
+      {loading && <div style={{ textAlign: "center", padding: "60px 16px" }}><div style={{ fontSize: 36, marginBottom: 12, animation: "fadeIn .6s ease" }}>📦</div><div style={{ fontSize: 16, color: "#aaa", animation: "fadeIn .8s ease" }}>読み込み中…</div></div>}
       {!loading && <>
         {/* 検索展開時 */}
         {qOpen && <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-          <div style={{ flex: 1, position: "relative" }}><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder={"BOX名で検索…"} style={{ fontSize: 16, padding: "8px 32px 8px 12px", borderRadius: 6, border: "1px solid #eee", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }} /><button onClick={() => { setQ(""); setQOpen(false); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#bbb" }}>✕</button></div>
+          <div style={{ flex: 1, position: "relative" }}><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder={"BOX名で検索…"} style={{ fontSize: 16, padding: "10px 32px 10px 14px", borderRadius: 10, border: "1px solid #e0e0e0", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box", boxShadow: "0 1px 4px rgba(0,0,0,.04) inset", transition: "border-color .2s" }} onFocus={e => e.target.style.borderColor = "#999"} onBlur={e => e.target.style.borderColor = "#e0e0e0"} /><button onClick={() => { setQ(""); setQOpen(false); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#bbb" }}>✕</button></div>
         </div>}
         {/* メインツールバー: ソート | 表示切替 | 絞り込み | 検索 */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0", marginBottom: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 3 }}>{[["release_date", "発売日"], ["change", "変動率"], ["price", "価格"]].map(([k, l]) => <button key={k} onClick={() => setSort(k)} style={pill(sort === k)}>{l}</button>)}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <button onClick={() => setQOpen(!qOpen)} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: qOpen || q ? "#111" : "#fff", color: qOpen || q ? "#fff" : "#aaa", borderColor: qOpen || q ? "#111" : "#eee" }}>🔍</button>
-            <button onClick={() => setFOpen(!fOpen)} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: hasF ? "#111" : "#fff", color: hasF ? "#fff" : "#aaa", borderColor: hasF ? "#111" : "#eee" }}>{hasF ? `${fCnt}` : "⊘"}</button>
-            <button onClick={() => setView("list")} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: view === "list" ? "#111" : "#fff", color: view === "list" ? "#fff" : "#aaa", borderColor: view === "list" ? "#111" : "#eee" }}>☰</button>
-            <button onClick={() => setView("grid")} style={{ width: 32, height: 32, borderRadius: 6, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: view === "grid" ? "#111" : "#fff", color: view === "grid" ? "#fff" : "#aaa", borderColor: view === "grid" ? "#111" : "#eee" }}>⊞</button>
+            <button onClick={() => setQOpen(!qOpen)} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: qOpen || q ? "#111" : "#fff", color: qOpen || q ? "#fff" : "#aaa", borderColor: qOpen || q ? "#111" : "#eee" }}>🔍</button>
+            <button onClick={() => setFOpen(!fOpen)} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: hasF ? "#111" : "#fff", color: hasF ? "#fff" : "#aaa", borderColor: hasF ? "#111" : "#eee" }}>{hasF ? `${fCnt}` : "⊘"}</button>
+            <button onClick={() => setView("list")} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: view === "list" ? "#111" : "#fff", color: view === "list" ? "#fff" : "#aaa", borderColor: view === "list" ? "#111" : "#eee" }}>☰</button>
+            <button onClick={() => setView("grid")} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: view === "grid" ? "#111" : "#fff", color: view === "grid" ? "#fff" : "#aaa", borderColor: view === "grid" ? "#111" : "#eee" }}>⊞</button>
           </div>
         </div>
-        {fOpen && <div style={{ padding: "8px 10px", backgroundColor: "#fafafa", border: "1px solid #f0f0f0", borderRadius: 8, marginBottom: 6 }}>
+        {fOpen && <div style={{ padding: "10px 12px", backgroundColor: "#fafafa", border: "1px solid #e8e8e8", borderRadius: 10, marginBottom: 6, boxShadow: "0 2px 8px rgba(0,0,0,.03)", animation: "fadeUp .25s ease both" }}>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
             <div><div style={{ fontSize: 14, color: "#999", marginBottom: 3 }}>期間</div><div style={{ display: "flex", gap: 3 }}>{[["week", "前週比"], ["1m", "1M"], ["3m", "3M"], ["6m", "6M"], ["12m", "12M"]].map(([k, l]) => <button key={k} onClick={() => setPeriod(k)} style={pill(period === k)}>{l}</button>)}</div></div>
             <div><div style={{ fontSize: 14, color: "#999", marginBottom: 3 }}>方向</div><div style={{ display: "flex", gap: 3 }}>{[["all", "全て"], ["up", "↗ 上昇"], ["down", "↘ 下落"]].map(([k, l]) => <button key={k} onClick={() => setDir(k)} style={pill(dir === k)}>{l}</button>)}</div></div>
@@ -453,10 +478,10 @@ export default function BoxSoubaApp() {
         </div>}
         {view === "grid" ? <div className="box-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>{filtered.map(b => <BoxGridCard key={b.id} b={b} onSelect={setSel} />)}</div>
           : <><ListHeader />{filtered.map((b, i) => <BoxRow key={b.id} b={b} isLast={i === filtered.length - 1} onSelect={setSel} />)}</>}
-        {!filtered.length && <div style={{ textAlign: "center", padding: "32px 16px", color: "#ccc", fontSize: 16 }}>{"\u8a72\u5f53\u3059\u308bBOX\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093"}</div>}
+        {!filtered.length && <div style={{ textAlign: "center", padding: "48px 16px", animation: "fadeIn .4s ease" }}><div style={{ fontSize: 32, marginBottom: 8 }}>📭</div><div style={{ fontSize: 16, color: "#ccc" }}>該当するBOXが見つかりません</div></div>}
       </>}
     </div>
-    <footer style={{ borderTop: "1px solid #eee", padding: "12px 0", textAlign: "center", backgroundColor: "#fff" }}><div style={{ fontSize: 13, color: "#bbb" }}>{"\u203b"} {"\u4fa1\u683c\u306f\u30b9\u30cb\u30c0\u30f3\u306e\u53d6\u5f15\u76f8\u5834\u3092\u53c2\u8003\u306b\u3057\u3066\u3044\u307e\u3059"}</div><div style={{ fontSize: 13, color: "#ccc", marginTop: 4 }}>BOX{"\u76f8\u5834"}AI {"\u00a9"} 2025</div></footer>
+    <footer style={{ borderTop: "1px solid #eee", padding: "20px 0", textAlign: "center", background: "linear-gradient(180deg, #fff 0%, #f8f9fa 100%)" }}><div style={{ fontSize: 12, color: "#bbb" }}>※ 価格はスニダンの取引相場を参考にしています</div><div style={{ fontSize: 12, color: "#ccc", marginTop: 6 }}>BOX相場AI © 2025</div></footer>
     {sel && <BoxDetail box={sel} onClose={() => setSel(null)} />}
   </div>;
 }
