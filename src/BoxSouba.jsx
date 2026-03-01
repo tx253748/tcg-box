@@ -142,7 +142,7 @@ const BoxDetail = ({ box, onClose }) => {
 
           {/* Buy Links */}
           <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "4px 0" }}>
-            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 16, fontWeight: 600, color: "#555", textDecoration: "none", padding: "7px 14px", borderRadius: 6, border: "1px solid #eee", backgroundColor: "#fafafa", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f0f0f0"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}><img src={l.icon} alt="" style={{ width: 18, height: 18, borderRadius: 4 }} />{l.name}<span style={{ fontSize: 13, color: "#bbb" }}>↗</span></a>)}
+            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 16, fontWeight: 600, color: "#555", textDecoration: "none", padding: "7px 14px", borderRadius: 6, border: "1px solid #eee", backgroundColor: "#fafafa", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f0f0f0"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}><img src={l.icon} alt="" style={{ width: 18, height: 18, borderRadius: 4 }} />{l.name}<span style={{ fontSize: 13, color: "#bbb" }}>↗</span></a>)}
           </div>
         </div>
       </div>
@@ -174,18 +174,13 @@ const BoxRow = ({ b, isLast, onSelect }) => {
   return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={() => onSelect(b)}
     style={{ padding: "8px 10px", borderBottom: isLast ? "none" : "1px solid #f5f5f5", borderRadius: hv ? 8 : 0, backgroundColor: hov ? "#fafafa" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .12s" }}>
     <div style={{ display: "flex", alignItems: "center" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
-        <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 1 }}>
-            <span style={{ fontSize: 13, color: "#ccc" }}>{fmtDate(b.release)}</span>
-            {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</span> : null; })()}
-          </div>
-        </div>
-      </div>
-      <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
+      <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0, marginRight: 8 }} />
+      <span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 }}>{b.name}</span>
+      {b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}
+      <span style={{ fontSize: 13, color: "#ccc", flexShrink: 0, marginLeft: 6 }}>{fmtDate(b.release)}</span>
+      <div style={{ flexShrink: 0, marginLeft: 8, textAlign: "right" }}>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</span>
+        {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums", marginLeft: 6 }}>{d.text}</span> : null; })()}
       </div>
       <div style={{ width: 18, flexShrink: 0, textAlign: "center" }}><span style={{ color: hov ? "#999" : "#ddd", fontSize: 15 }}>{"\u203a"}</span></div>
     </div>
