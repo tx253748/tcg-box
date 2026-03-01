@@ -172,25 +172,25 @@ const BoxRow = ({ b, isLast, onSelect }) => {
   const [hov, setHov] = useState(false);
   const st = stS(b.status), hv = b.current >= 15000;
   return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={() => onSelect(b)}
-    style={{ padding: "8px 10px", borderBottom: isLast ? "none" : "1px solid #f5f5f5", borderRadius: hv ? 8 : 0, backgroundColor: hov ? "#fafafa" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .12s" }}>
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0, marginRight: 8 }} />
-      <span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 }}>{b.name}</span>
+    style={{ padding: "8px 10px", borderBottom: isLast ? "none" : "1px solid #f0f0f0", borderRadius: hv ? 8 : 0, backgroundColor: hov ? "#fafafa" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .12s" }}>
+    {/* 上段: 画像 + BOX名 + 価格 */}
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+      <span style={{ fontSize: 16, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
       {b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}
-      <span style={{ fontSize: 13, color: "#ccc", flexShrink: 0, marginLeft: 6 }}>{fmtDate(b.release)}</span>
-      <div style={{ flexShrink: 0, marginLeft: 8, textAlign: "right" }}>
-        <span style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</span>
-        {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums", marginLeft: 6 }}>{d.text}</span> : null; })()}
-      </div>
-      <div style={{ width: 18, flexShrink: 0, textAlign: "center" }}><span style={{ color: hov ? "#999" : "#ddd", fontSize: 15 }}>{"\u203a"}</span></div>
+      <span style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</span>
+      <span style={{ color: hov ? "#999" : "#ddd", fontSize: 15, width: 12, flexShrink: 0, textAlign: "center" }}>{"\u203a"}</span>
     </div>
-    <div className="box-row-trend" style={{ marginTop: 4, paddingTop: 4, paddingLeft: 48, borderTop: "1px solid #f0f0f0" }}>
-      <TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} />
+    {/* 下段: 発売日 + 変動 + トレンド */}
+    <div className="box-row-trend" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, paddingLeft: 48 }}>
+      <span style={{ fontSize: 12, color: "#bbb" }}>{fmtDate(b.release)}</span>
+      {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 12, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</span> : null; })()}
+      <div style={{ marginLeft: "auto" }}><TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} /></div>
     </div>
   </div>;
 };
 
-const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 15, color: "#bbb", flex: 1 }}>{"\u5546\u54c1\u540d"}</span><div style={{ width: 85, textAlign: "right", flexShrink: 0 }}><span style={{ fontSize: 15, color: "#bbb" }}>{"\u4fa1\u683c"}</span></div><span style={{ width: 18 }} /></div>;
+const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 13, color: "#bbb", flex: 1 }}>商品名</span><span style={{ fontSize: 13, color: "#bbb", flexShrink: 0 }}>価格</span><span style={{ width: 12 }} /></div>;
 
 const useBoxData = () => {
   const [boxes, setBoxes] = useState(null), [loading, setLoading] = useState(true);
