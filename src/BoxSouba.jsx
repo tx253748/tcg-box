@@ -95,11 +95,11 @@ const BoxDetail = ({ box, onClose }) => {
           <div style={{ display: "flex", gap: 12 }}>
             <img src={box.img} alt={box.name} style={{ width: 88, height: 88, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: "1px solid #eee" }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2, flexWrap: "wrap" }}>
                 <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.2 }}>{box.name}</div>
                 {box.status && <Tag st={st}>{box.status}</Tag>}
-                {box.release && <span style={{ fontSize: 15, color: "#aaa" }}>{fmtDate(box.release)}</span>}
               </div>
+              {box.release && <div style={{ fontSize: 13, color: "#aaa", marginBottom: 4 }}>{fmtDate(box.release)}</div>}
               <div style={{ fontSize: 30, fontWeight: 900, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{box.current ? `¥${box.current.toLocaleString()}` : "—"}</div>
               {box.weekDiff != null && (() => { const d = fmtDiff(diff, box.current); return d ? <div style={{ fontSize: 15, fontWeight: 600, color: d.col, marginTop: 2 }}>{d.text}</div> : null; })()}
             </div>
