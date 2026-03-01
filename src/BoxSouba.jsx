@@ -20,6 +20,8 @@ const buildSpark = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date.lo
 const buildSparkRaw = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date.localeCompare(b.date)).map(p => ({ date: p.date, price: p.price }));
 
 const stS = s => ({ "\u767a\u58f2\u524d": { c: "#2563eb", b: "#eff6ff", d: "#bfdbfe" }, "\u8ca9\u58f2\u4e2d": { c: "#16a34a", b: "#f0fdf4", d: "#bbf7d0" }, "\u8ca9\u58f2\u7d42\u4e86": { c: "#9ca3af", b: "#f9fafb", d: "#e5e7eb" } }[s] || { c: "#888", b: "#f5f5f5", d: "#eee" });
+const fmtDate = (d) => { if (!d) return ""; const [y, m, dd] = d.split("-"); return `${y}.${parseInt(m)}.${parseInt(dd)}発売`; };
+const fmtDiff = (diff, current) => { if (diff == null) return null; const pv = current - diff; const pc = pv > 0 ? Math.round((diff / pv) * 100) : 0; const sign = diff > 0 ? "+" : ""; const arrow = diff > 0 ? "↗" : diff < 0 ? "↘" : "→"; const col = diff > 0 ? "#16a34a" : diff < 0 ? "#dc2626" : "#aaa"; return { text: `${arrow} ${sign}${diff.toLocaleString()} (${sign}${pc}%)`, col }; };
 const Tag = ({ children, st }) => <span style={{ fontSize: 15, fontWeight: 500, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap" }}>{children}</span>;
 const TA = ({ d, sz = 14 }) => !d ? <span style={{ color: "#ddd", fontSize: sz }}>—</span> : d === "up" ? <span style={{ color: "#16a34a", fontSize: sz, fontWeight: 700 }}>↗</span> : d === "down" ? <span style={{ color: "#dc2626", fontSize: sz, fontWeight: 700 }}>↘</span> : <span style={{ color: "#aaa", fontSize: sz }}>→</span>;
 const TG = ({ a, b, c, e, pa, pb, pc, pe }) => <div style={{ display: "flex", gap: 2 }}>{[[e, pe], [c, pc], [b, pb], [a, pa]].map(([d, pct], i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 24 }}><TA d={d} sz={13} />{pct != null && <span style={{ fontSize: 10, color: d === "up" ? "#16a34a" : d === "down" ? "#dc2626" : "#bbb", fontWeight: 600, lineHeight: 1, marginTop: 1 }}>{Math.abs(Math.round(pct))}</span>}</div>)}</div>;
@@ -96,10 +98,10 @@ const BoxDetail = ({ box, onClose }) => {
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4, flexWrap: "wrap" }}>
                 <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.2 }}>{box.name}</div>
                 {box.status && <Tag st={st}>{box.status}</Tag>}
-                {box.release && <span style={{ fontSize: 15, color: "#aaa" }}>発売日{box.release.replace(/-/g, ".")}</span>}
+                {box.release && <span style={{ fontSize: 15, color: "#aaa" }}>{fmtDate(box.release)}</span>}
               </div>
               <div style={{ fontSize: 30, fontWeight: 900, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{box.current ? `¥${box.current.toLocaleString()}` : "—"}</div>
-              {box.weekDiff != null && <div style={{ fontSize: 16, fontWeight: 600, color: dc, marginTop: 2 }}>前週比 {diff > 0 ? "+" : ""}{diff.toLocaleString()}円{(() => { const pv = box.current - diff; return pv > 0 ? ` (${diff > 0 ? "+" : ""}${Math.round((diff / pv) * 100)}%)` : ""; })()}</div>}
+              {box.weekDiff != null && (() => { const d = fmtDiff(diff, box.current); return d ? <div style={{ fontSize: 15, fontWeight: 600, color: d.col, marginTop: 2 }}>{d.text}</div> : null; })()}
             </div>
           </div>
         </div>
@@ -156,11 +158,11 @@ const BoxGridCard = ({ b, onSelect }) => {
     <div style={{ position: "relative" }}><img src={b.img} alt={b.name} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />{b.status && b.status !== "\u2014" && <div style={{ position: "absolute", top: 6, left: 6 }}><Tag st={st}>{b.status}</Tag></div>}</div>
     <div style={{ padding: "8px 10px" }}>
       <div style={{ fontSize: 16, fontWeight: 600, color: "#222", lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
-      <div style={{ fontSize: 14, color: "#ccc", marginBottom: 6 }}>{b.release?.replace(/-/g, ".") || ""}</div>
+      <div style={{ fontSize: 14, color: "#ccc", marginBottom: 6 }}>{fmtDate(b.release) || ""}</div>
       <div style={{ display: "flex", gap: 2, justifyContent: "center", marginBottom: 4 }}>{[["12M", b.t12, b.pct12], ["6M", b.t6, b.pct6], ["3M", b.t3, b.pct3], ["1M", b.t1, b.pct1]].map(([l, t, p]) => <div key={l} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 26 }}><span style={{ fontSize: 10, color: "#ccc" }}>{l}</span><TA d={t} sz={12} />{p != null && <span style={{ fontSize: 10, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 600 }}>{Math.abs(Math.round(p))}</span>}</div>)}</div>
       <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 5, textAlign: "center" }}>
         <div style={{ fontSize: 21, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
-        {b.weekDiff != null && (() => { const pv = b.current - b.weekDiff, pc = pv > 0 ? Math.round((b.weekDiff / pv) * 100) : 0; return <div style={{ fontSize: 15, fontWeight: 600, color: wc, fontVariantNumeric: "tabular-nums" }}>{"\u524d\u9031\u6bd4"} {b.weekDiff > 0 ? "+" : ""}{b.weekDiff.toLocaleString()} ({pc > 0 ? "+" : ""}{pc}%)</div>; })()}
+        {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <div style={{ fontSize: 14, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</div> : null; })()}
       </div>
     </div>
   </div>;
@@ -174,12 +176,12 @@ const BoxRow = ({ b, isLast, onSelect }) => {
     <div style={{ display: "flex", alignItems: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
         <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div><div style={{ fontSize: 15, color: "#ccc", fontVariantNumeric: "tabular-nums", marginTop: 1 }}>{b.release?.replace(/-/g, ".") || ""}</div></div>
+        <div style={{ minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div><div style={{ fontSize: 15, color: "#ccc", fontVariantNumeric: "tabular-nums", marginTop: 1 }}>{fmtDate(b.release)}</div></div>
       </div>
       <div style={{ flexShrink: 0 }}><TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} /></div>
       <div style={{ width: 85, textAlign: "right", flexShrink: 0 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: b.weekDiff != null ? (b.weekDiff > 0 ? "#16a34a" : b.weekDiff < 0 ? "#dc2626" : "#111") : "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
-        {b.weekDiff != null && <div style={{ fontSize: 14, fontWeight: 600, color: b.weekDiff > 0 ? "#16a34a" : b.weekDiff < 0 ? "#dc2626" : "#aaa", fontVariantNumeric: "tabular-nums" }}>{b.weekDiff > 0 ? "+" : ""}{b.weekDiff.toLocaleString()}</div>}
+        <div style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
+        {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <div style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</div> : null; })()}
       </div>
       <div style={{ width: 18, flexShrink: 0, textAlign: "center" }}><span style={{ color: hov ? "#999" : "#ddd", fontSize: 15 }}>{"\u203a"}</span></div>
     </div>
