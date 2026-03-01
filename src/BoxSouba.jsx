@@ -68,24 +68,29 @@ const BoxDetail = ({ box, onClose }) => {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", zIndex: 100, backdropFilter: "blur(2px)" }} />
     <div style={{ position: "fixed", inset: 0, zIndex: 101, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "32px 16px", overflow: "auto" }} onClick={onClose}>
       <div style={{ backgroundColor: "#fff", borderRadius: 16, maxWidth: 480, width: "100%", boxShadow: "0 16px 48px rgba(0,0,0,.15)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ position: "relative" }}>
-          <img src={box.img} alt={box.name} style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: "16px 16px 0 0" }} />
-          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 30, height: 30, borderRadius: 15, backgroundColor: "rgba(0,0,0,.5)", border: "none", color: "#fff", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2715"}</button>
-        </div>
-        <div style={{ padding: "20px 20px 24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <div style={{ fontSize: 17, fontWeight: 800 }}>{box.name}</div>
-            {box.status && <Tag st={st}>{box.status}</Tag>}
+        {/* ヘッダー: 左BOX画像 + 右情報 */}
+        <div style={{ padding: "20px 20px 0", position: "relative" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: "#f0f0f0", border: "none", color: "#999", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>✕</button>
+          <div style={{ display: "flex", gap: 14 }}>
+            <img src={box.img} alt={box.name} style={{ width: 100, height: 100, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid #eee" }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2 }}>{box.name}</div>
+                {box.status && <Tag st={st}>{box.status}</Tag>}
+              </div>
+              <div style={{ fontSize: 10, color: "#aaa", marginBottom: 8 }}>{box.release?.replace(/-/g, ".")}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{box.current ? `¥${box.current.toLocaleString()}` : "—"}</div>
+              {box.weekDiff != null && <div style={{ fontSize: 11, fontWeight: 600, color: dc, marginTop: 3 }}>前週比 {diff > 0 ? "+" : ""}{diff.toLocaleString()}円{(() => { const pv = box.current - diff; return pv > 0 ? ` (${diff > 0 ? "+" : ""}${Math.round((diff / pv) * 100)}%)` : ""; })()}</div>}
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: "#aaa", marginBottom: 16 }}>{box.release?.replace(/-/g, ".")}</div>
-          <div style={{ backgroundColor: "#f8f8f8", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: "#888", fontWeight: 600, marginBottom: 4 }}>BOX{"\u76f8\u5834"}</div>
-            <div style={{ fontSize: 26, fontWeight: 900, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{box.current ? `\u00a5${box.current.toLocaleString()}` : "\u2014"}</div>
-            {box.weekDiff != null && <div style={{ fontSize: 12, fontWeight: 600, color: dc, marginTop: 4 }}>{"\u524d\u9031\u6bd4"} {diff > 0 ? "+" : ""}{diff.toLocaleString()}{"\u5186"}{(() => { const pv = box.current - diff; return pv > 0 ? ` (${diff > 0 ? "+" : ""}${Math.round((diff / pv) * 100)}%)` : ""; })()}</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 10, paddingTop: 8, borderTop: "1px solid #eee" }}>
+        </div>
+        <div style={{ padding: "12px 20px 24px" }}>
+          {/* トレンド + スパークライン */}
+          <div style={{ backgroundColor: "#f8f8f8", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 8 }}>
               {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 9, color: "#bbb", marginBottom: 2 }}>{l}</div><TA d={t} />{p != null && <div style={{ fontSize: 9, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
             </div>
-            {box.spark && <div style={{ marginTop: 10 }}><Spark data={box.spark} h={48} color={diff >= 0 ? "#16a34a" : "#dc2626"} /></div>}
+            {box.spark && <div style={{ marginTop: 8 }}><Spark data={box.spark} h={44} color={diff >= 0 ? "#16a34a" : "#dc2626"} /></div>}
           </div>
           {/* 収録カード相場 */}
           <div style={{ marginBottom: 16 }}>
