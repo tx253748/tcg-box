@@ -44,11 +44,17 @@ const BoxDetail = ({ box, onClose }) => {
       .then(async d => {
         if (!Array.isArray(d) || !d.length) { setTopCards([]); setLoading(false); return; }
         const ids = d.map(r => r.featured_card_id).filter(Boolean);
-        const cardsData = ids.length ? await sbGet(`featured_cards?select=id,name,rarity,price,img_url,pack&id=in.(${ids.join(",")})`) : [];
+        const [cardsData, pricesData] = await Promise.all([
+          ids.length ? sbGet(`featured_cards?select=id,name,rarity,price,img_url,pack&id=in.(${ids.join(",")})`) : [],
+          ids.length ? sbGet(`featured_card_prices?select=card_id,price_raw&card_id=in.(${ids.join(",")})&order=fetched_date.desc`) : [],
+        ]);
         const cm = {}; (Array.isArray(cardsData) ? cardsData : []).forEach(c => { cm[c.id] = c; });
+        // 最新価格をカードIDごとに1件だけ取る
+        const pm = {}; (Array.isArray(pricesData) ? pricesData : []).forEach(p => { if (!pm[p.card_id] && p.price_raw) pm[p.card_id] = p.price_raw; });
         setTopCards(d.map(r => {
           const fc = cm[r.featured_card_id] || {};
-          return { rank: r.rank, probability: parseFloat(r.probability), card_name: fc.name || "", rarity: fc.rarity || "", card_price: fc.price || 0, image_url: fc.img_url || null };
+          const livePrice = pm[r.featured_card_id] || fc.price || 0;
+          return { rank: r.rank, probability: parseFloat(r.probability), card_name: fc.name || "", rarity: fc.rarity || "", card_price: livePrice, image_url: fc.img_url || null };
         }));
         setLoading(false);
       }).catch(() => { setTopCards([]); setLoading(false); });
@@ -194,9 +200,16 @@ const AdminPage = ({ onBack }) => {
     const rows = await sbGet(`box_top_cards?select=id,rank,probability,featured_card_id&box_id=eq.${boxId}&order=rank`);
     if (!Array.isArray(rows) || !rows.length) { setTopCards([]); return; }
     const ids = rows.map(r => r.featured_card_id).filter(Boolean);
-    const cardsData = ids.length ? await sbGet(`featured_cards?select=id,name,rarity,price,img_url&id=in.(${ids.join(",")})`) : [];
+    const [cardsData, pricesData] = await Promise.all([
+      ids.length ? sbGet(`featured_cards?select=id,name,rarity,price,img_url&id=in.(${ids.join(",")})`) : [],
+      ids.length ? sbGet(`featured_card_prices?select=card_id,price_raw&card_id=in.(${ids.join(",")})&order=fetched_date.desc`) : [],
+    ]);
     const cm = {}; (Array.isArray(cardsData) ? cardsData : []).forEach(c => { cm[c.id] = c; });
-    setTopCards(rows.map(r => ({ ...r, featured_cards: cm[r.featured_card_id] || null })));
+    const pm = {}; (Array.isArray(pricesData) ? pricesData : []).forEach(p => { if (!pm[p.card_id] && p.price_raw) pm[p.card_id] = p.price_raw; });
+    setTopCards(rows.map(r => {
+      const fc = cm[r.featured_card_id] || {};
+      return { ...r, featured_cards: { ...fc, price: pm[r.featured_card_id] || fc.price || 0 } };
+    }));
   };
   const selectBox = (b) => { setSelBox(b); loadTopCards(b.id); };
 
