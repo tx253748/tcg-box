@@ -17,6 +17,7 @@ const merUrl = kw => a8(A8M, `https://jp.mercari.com/search?keyword=${encodeURIC
 const calcTrend = (pr, days) => { if (!pr || pr.length < 2) return null; const s = [...pr].sort((a, b) => b.date.localeCompare(a.date)); const l = s[0], lm = new Date(l.date).getTime(), tm = days * 864e5; let best = null, bd = Infinity; for (const p of s) { const d = Math.abs((lm - new Date(p.date).getTime()) - tm), ac = (lm - new Date(p.date).getTime()) / 864e5; if (ac >= days * 0.7 && d < bd) { best = p; bd = d; } } if (!best) return null; return l.price > best.price ? "up" : l.price < best.price ? "down" : "flat"; };
 const calcPct = (pr, days) => { if (!pr || pr.length < 2) return null; const s = [...pr].sort((a, b) => b.date.localeCompare(a.date)); const l = s[0], lm = new Date(l.date).getTime(), tm = days * 864e5; let best = null, bd = Infinity; for (const p of s) { const d = Math.abs((lm - new Date(p.date).getTime()) - tm), ac = (lm - new Date(p.date).getTime()) / 864e5; if (ac >= days * 0.7 && d < bd) { best = p; bd = d; } } if (!best || !best.price) return null; return ((l.price - best.price) / best.price) * 100; };
 const buildSpark = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date.localeCompare(b.date)).map(p => p.price);
+const buildSparkRaw = (pr) => !pr?.length ? null : [...pr].sort((a, b) => a.date.localeCompare(b.date)).map(p => ({ date: p.date, price: p.price }));
 
 const stS = s => ({ "\u767a\u58f2\u524d": { c: "#2563eb", b: "#eff6ff", d: "#bfdbfe" }, "\u8ca9\u58f2\u4e2d": { c: "#16a34a", b: "#f0fdf4", d: "#bbf7d0" }, "\u8ca9\u58f2\u7d42\u4e86": { c: "#9ca3af", b: "#f9fafb", d: "#e5e7eb" } }[s] || { c: "#888", b: "#f5f5f5", d: "#eee" });
 const Tag = ({ children, st }) => <span style={{ fontSize: 11, fontWeight: 500, color: st.c, backgroundColor: st.b, padding: "2px 8px", borderRadius: 10, border: `1px solid ${st.d}`, whiteSpace: "nowrap" }}>{children}</span>;
@@ -74,23 +75,29 @@ const BoxDetail = ({ box, onClose }) => {
           <div style={{ display: "flex", gap: 14 }}>
             <img src={box.img} alt={box.name} style={{ width: 100, height: 100, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid #eee" }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
                 <div style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2 }}>{box.name}</div>
                 {box.status && <Tag st={st}>{box.status}</Tag>}
+                {box.release && <span style={{ fontSize: 10, color: "#aaa" }}>発売日{box.release.replace(/-/g, ".")}</span>}
               </div>
-              <div style={{ fontSize: 10, color: "#aaa", marginBottom: 8 }}>{box.release?.replace(/-/g, ".")}</div>
               <div style={{ fontSize: 24, fontWeight: 900, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{box.current ? `¥${box.current.toLocaleString()}` : "—"}</div>
               {box.weekDiff != null && <div style={{ fontSize: 11, fontWeight: 600, color: dc, marginTop: 3 }}>前週比 {diff > 0 ? "+" : ""}{diff.toLocaleString()}円{(() => { const pv = box.current - diff; return pv > 0 ? ` (${diff > 0 ? "+" : ""}${Math.round((diff / pv) * 100)}%)` : ""; })()}</div>}
             </div>
           </div>
         </div>
         <div style={{ padding: "12px 20px 24px" }}>
-          {/* トレンド + スパークライン */}
+          {/* トレンド + スパークライン（12M固定） */}
           <div style={{ backgroundColor: "#f8f8f8", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 0 }}>
               {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 9, color: "#bbb", marginBottom: 2 }}>{l}</div><TA d={t} />{p != null && <div style={{ fontSize: 9, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
             </div>
-            {box.spark && <div style={{ marginTop: 8 }}><Spark data={box.spark} h={44} color={diff >= 0 ? "#16a34a" : "#dc2626"} /></div>}
+            {(() => {
+              const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 365);
+              const filtered = box.sparkRaw?.filter(p => new Date(p.date) >= cutoff).map(p => p.price);
+              if (!filtered || filtered.length < 2) return null;
+              const col = filtered[filtered.length - 1] >= filtered[0] ? "#16a34a" : "#dc2626";
+              return <div style={{ marginTop: 8 }}><Spark data={filtered} h={44} color={col} /></div>;
+            })()}
           </div>
           {/* 収録カード相場 */}
           <div style={{ marginBottom: 16 }}>
@@ -115,9 +122,9 @@ const BoxDetail = ({ box, onClose }) => {
               </> : <div style={{ textAlign: "center", padding: 20, color: "#ccc", fontSize: 12 }}>カードデータ未登録</div>}
           </div>
 
-          {/* Buy — 軽いテキストリンク */}
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", padding: "8px 0" }}>
-            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#888", textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>{l.name} <span style={{ fontSize: 11 }}>↗</span></a>)}
+          {/* Buy Links */}
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", padding: "8px 0" }}>
+            {box.buyLinks?.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "#666", textDecoration: "none", padding: "8px 16px", borderRadius: 8, border: "1px solid #eee", backgroundColor: "#fafafa", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f0f0f0"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}><img src={l.icon} alt="" style={{ width: 20, height: 20, borderRadius: 5 }} />{l.name}<span style={{ fontSize: 10, color: "#bbb" }}>↗</span></a>)}
           </div>
         </div>
       </div>
@@ -181,7 +188,7 @@ const useBoxData = () => {
           const cur = b.manual_price || so[0]?.price || null;
           const wa = new Date(); wa.setDate(wa.getDate() - 7); const wp = so.find(p => new Date(p.date) <= wa);
           const wd = (cur && wp) ? cur - wp.price : null;
-          return { id: b.id, name: b.name, release: b.release_date || "", status: b.status || null, current: cur, lastDate: so[0]?.date || null, t12: calcTrend(bp, 365), t6: calcTrend(bp, 180), t3: calcTrend(bp, 90), t1: calcTrend(bp, 30), pct12: calcPct(bp, 365), pct6: calcPct(bp, 180), pct3: calcPct(bp, 90), pct1: calcPct(bp, 30), weekDiff: wd, spark: buildSpark(bp), img: b.image_url || `https://placehold.co/44x44/888/fff?text=${encodeURIComponent(b.name.slice(0, 2))}`, snkrdunk_id: b.snkrdunk_id, buyLinks: [{ name: "\u30b9\u30cb\u30c0\u30f3", url: snkUrl(b.snkrdunk_id) }, { name: "\u30e1\u30eb\u30ab\u30ea", url: merUrl(`${b.name} BOX \u672a\u958b\u5c01`) }] };
+          return { id: b.id, name: b.name, release: b.release_date || "", status: b.status || null, current: cur, lastDate: so[0]?.date || null, t12: calcTrend(bp, 365), t6: calcTrend(bp, 180), t3: calcTrend(bp, 90), t1: calcTrend(bp, 30), pct12: calcPct(bp, 365), pct6: calcPct(bp, 180), pct3: calcPct(bp, 90), pct1: calcPct(bp, 30), weekDiff: wd, spark: buildSpark(bp), sparkRaw: buildSparkRaw(bp), img: b.image_url || `https://placehold.co/44x44/888/fff?text=${encodeURIComponent(b.name.slice(0, 2))}`, snkrdunk_id: b.snkrdunk_id, buyLinks: [{ name: "\u30b9\u30cb\u30c0\u30f3", url: snkUrl(b.snkrdunk_id), icon: "/icons/snkrdunk.png" }, { name: "\u30e1\u30eb\u30ab\u30ea", url: merUrl(`${b.name} BOX \u672a\u958b\u5c01`), icon: "/icons/mercari.png" }] };
         }));
       } catch (e) { console.error(e); setBoxes([]); }
       setLoading(false);
