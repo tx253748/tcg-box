@@ -106,14 +106,17 @@ const BoxDetail = ({ box, onClose }) => {
           </div>
         </div>
         <div style={{ padding: "6px 12px 12px" }}>
-          {/* スパークライン */}
-          <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "6px 10px", marginBottom: 6 }}>
+          {/* トレンド + スパークライン */}
+          <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
+            <div style={{ display: "flex", gap: 0 }}>
+              {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, color: "#999", marginBottom: 1, fontWeight: 600 }}>{l}</div><TA d={t} sz={14} />{p != null && <div style={{ fontSize: 12, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
+            </div>
             {(() => {
               const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 365);
               const filtered = box.sparkRaw?.filter(p => new Date(p.date) >= cutoff);
               if (!filtered || filtered.length < 2) return null;
               const col = filtered[filtered.length - 1].price >= filtered[0].price ? "#16a34a" : "#dc2626";
-              return <SparkDate rawData={filtered} totalDays={365} h={40} color={col} />;
+              return <div style={{ marginTop: 4 }}><SparkDate rawData={filtered} totalDays={365} h={40} color={col} /></div>;
             })()}
           </div>
           {/* 収録カード相場 */}
@@ -137,11 +140,6 @@ const BoxDetail = ({ box, onClose }) => {
               </> : <div style={{ textAlign: "center", padding: 12, color: "#ccc", fontSize: 16 }}>カードデータ未登録</div>}
           </div>
 
-          {/* トレンド（下部） */}
-          <div style={{ display: "flex", gap: 0, padding: "6px 0", borderTop: "1px solid #f0f0f0", marginBottom: 6 }}>
-            {[["12M", box.t12, box.pct12], ["6M", box.t6, box.pct6], ["3M", box.t3, box.pct3], ["1M", box.t1, box.pct1]].map(([l, t, p]) => <div key={l} style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, color: "#999", marginBottom: 1, fontWeight: 600 }}>{l}</div><TA d={t} sz={14} />{p != null && <div style={{ fontSize: 12, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 700 }}>{p > 0 ? "+" : ""}{Math.round(p)}%</div>}</div>)}
-          </div>
-
           {/* Buy Links */}
           <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "4px 0" }}>
             {box.buyLinks?.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 16, fontWeight: 600, color: "#555", textDecoration: "none", padding: "7px 14px", borderRadius: 6, border: "1px solid #eee", backgroundColor: "#fafafa", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f0f0f0"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}><img src={l.icon} alt="" style={{ width: 18, height: 18, borderRadius: 4 }} />{l.name}<span style={{ fontSize: 13, color: "#bbb" }}>↗</span></a>)}
@@ -161,7 +159,6 @@ const BoxGridCard = ({ b, onSelect }) => {
     <div style={{ padding: "8px 10px" }}>
       <div style={{ fontSize: 16, fontWeight: 600, color: "#222", lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
       <div style={{ fontSize: 14, color: "#ccc", marginBottom: 6 }}>{fmtDate(b.release) || ""}</div>
-      <div style={{ display: "flex", gap: 2, justifyContent: "center", marginBottom: 4 }}>{[["12M", b.t12, b.pct12], ["6M", b.t6, b.pct6], ["3M", b.t3, b.pct3], ["1M", b.t1, b.pct1]].map(([l, t, p]) => <div key={l} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 26 }}><span style={{ fontSize: 10, color: "#ccc" }}>{l}</span><TA d={t} sz={12} />{p != null && <span style={{ fontSize: 10, color: t === "up" ? "#16a34a" : t === "down" ? "#dc2626" : "#bbb", fontWeight: 600 }}>{Math.abs(Math.round(p))}</span>}</div>)}</div>
       <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 5, textAlign: "center" }}>
         <div style={{ fontSize: 21, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
         {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <div style={{ fontSize: 14, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</div> : null; })()}
@@ -180,7 +177,6 @@ const BoxRow = ({ b, isLast, onSelect }) => {
         <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
         <div style={{ minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 17, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</span>{b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}</div><div style={{ fontSize: 15, color: "#ccc", fontVariantNumeric: "tabular-nums", marginTop: 1 }}>{fmtDate(b.release)}</div></div>
       </div>
-      <div style={{ flexShrink: 0 }}><TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} /></div>
       <div style={{ width: 85, textAlign: "right", flexShrink: 0 }}>
         <div style={{ fontSize: 18, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums" }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</div>
         {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <div style={{ fontSize: 13, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums" }}>{d.text}</div> : null; })()}
@@ -190,7 +186,7 @@ const BoxRow = ({ b, isLast, onSelect }) => {
   </div>;
 };
 
-const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 15, color: "#bbb", flex: 1 }}>{"\u5546\u54c1\u540d"}</span><div style={{ display: "flex", gap: 2, flexShrink: 0 }}>{["12M", "6M", "3M", "1M"].map(l => <span key={l} style={{ fontSize: 10, color: "#ccc", width: 24, textAlign: "center" }}>{l}</span>)}</div><div style={{ width: 85, textAlign: "right", flexShrink: 0 }}><span style={{ fontSize: 15, color: "#bbb" }}>{"\u4fa1\u683c"}</span></div><span style={{ width: 18 }} /></div>;
+const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 15, color: "#bbb", flex: 1 }}>{"\u5546\u54c1\u540d"}</span><div style={{ width: 85, textAlign: "right", flexShrink: 0 }}><span style={{ fontSize: 15, color: "#bbb" }}>{"\u4fa1\u683c"}</span></div><span style={{ width: 18 }} /></div>;
 
 const useBoxData = () => {
   const [boxes, setBoxes] = useState(null), [loading, setLoading] = useState(true);
