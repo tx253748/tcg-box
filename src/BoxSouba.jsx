@@ -1,13 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 
-const SB = "https://xuvguqjlijjuhazrhnfc.supabase.co";
-const AK = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1dmd1cWpsaWpqdWhhenJobmZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MDYzNTMsImV4cCI6MjA4Njk4MjM1M30.Yslfq0jzBhYYn9OuSjzFIfE-iihXFNlV65_shTsUe_E";
+const SB = import.meta.env.VITE_SB_URL || "https://xuvguqjlijjuhazrhnfc.supabase.co";
+const AK = import.meta.env.VITE_SB_ANON || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1dmd1cWpsaWpqdWhhenJobmZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MDYzNTMsImV4cCI6MjA4Njk4MjM1M30.Yslfq0jzBhYYn9OuSjzFIfE-iihXFNlV65_shTsUe_E";
 const H = { apikey: AK, Authorization: `Bearer ${AK}` };
 const sbGet = (p) => fetch(`${SB}/rest/v1/${p}`, { headers: H }).then(r => r.json());
 const sbGetAll = async (path) => { let a = [], o = 0; while (true) { const d = await fetch(`${SB}/rest/v1/${path}&limit=1000&offset=${o}`, { headers: { ...H, Prefer: "count=exact" } }).then(r => r.json()); if (!Array.isArray(d) || !d.length) break; a = a.concat(d); o += d.length; if (d.length < 1000) break; } return a; };
-const sbPost = (p, body) => fetch(`${SB}/rest/v1/${p}`, { method: "POST", headers: { ...H, "Content-Type": "application/json", Prefer: "return=representation" }, body: JSON.stringify(body) }).then(r => r.json());
-const sbDel = (p) => fetch(`${SB}/rest/v1/${p}`, { method: "DELETE", headers: H });
-const sbUpsert = (p, body) => fetch(`${SB}/rest/v1/${p}`, { method: "POST", headers: { ...H, "Content-Type": "application/json", Prefer: "return=representation,resolution=merge-duplicates" }, body: JSON.stringify(body) }).then(r => r.json());
 
 const A8M = "4AXJKC+D1R4XM+5LNQ+BW8O2";
 const a8 = (m, u) => m ? `https://px.a8.net/svt/ejp?a8mat=${m}&a8ejpredirect=${encodeURIComponent(u)}` : u;
@@ -286,6 +283,7 @@ const BoxRow = ({ b, isLast, onSelect }) => {
       <div style={{ fontSize: 11, color: "#aaa" }}>{fmtDate(b.release)}</div>
     </div>
     <div style={{ textAlign: "right", flexShrink: 0 }}>
+      <div style={{ display: "flex", gap: 1, justifyContent: "flex-end", marginBottom: 2 }}>{[["12M", b.t12], ["6M", b.t6], ["3M", b.t3], ["1M", b.t1]].map(([l, t]) => <TA key={l} d={t} sz={11} />)}</div>
       <div style={{ fontSize: 15, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums", lineHeight: 1.2 }}>{b.current ? `¥${b.current.toLocaleString()}` : "—"}</div>
       {d && <div style={{ fontSize: 11, fontWeight: 600, color: wc, fontVariantNumeric: "tabular-nums" }}>{d.text}</div>}
     </div>
@@ -362,10 +360,8 @@ export default function BoxSoubaApp() {
 `}</style>
     <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 3px rgba(0,0,0,.04)", backdropFilter: "blur(12px)", background: "rgba(255,255,255,.92)" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", gap: 10, height: 52 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <div style={{ flexShrink: 0 }}>
           <img src="/icons/logo.png" alt="BOX相場AI" style={{ height: 32, width: "auto", objectFit: "contain" }} onError={e => { e.target.style.display = "none"; }} />
-          <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-.5px", background: "linear-gradient(135deg, #111 0%, #444 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>BOX相場AI</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg, #EAB308, #F59E0B)", padding: "2px 6px", borderRadius: 4 }}>BETA</span>
         </div>
         <div style={{ flex: 1, position: "relative" }}>
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="BOX名で検索…" style={{ fontSize: 14, padding: "7px 30px 7px 10px", borderRadius: 8, border: "1px solid #e5e5e5", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box", backgroundColor: "#f5f5f5", transition: "border-color .2s, background-color .2s" }} onFocus={e => { e.target.style.borderColor = "#bbb"; e.target.style.backgroundColor = "#fff"; }} onBlur={e => { e.target.style.borderColor = "#e5e5e5"; e.target.style.backgroundColor = "#f5f5f5"; }} />
