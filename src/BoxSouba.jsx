@@ -93,7 +93,7 @@ const CardDetail = ({ cardId, cardName, cardData, onClose }) => {
           <div style={{ padding: "12px 14px 0", position: "relative" }}>
             <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: "#f0f0f0", border: "none", color: "#999", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>✕</button>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-              {card.img_url ? <img src={card.img_url} alt={card.name} style={{ height: 220, borderRadius: 10, objectFit: "contain", boxShadow: "0 4px 16px rgba(0,0,0,.1)" }} />
+              {card.img_url ? <img src={card.img_url} alt={card.name} style={{ height: 220, borderRadius: 10, objectFit: "contain" }} />
                 : <div style={{ width: 150, height: 220, borderRadius: 10, backgroundColor: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "#ccc" }}>{card.rarity}</div>}
             </div>
             <div style={{ textAlign: "center", marginBottom: 8 }}>
@@ -225,37 +225,14 @@ const BoxDetail = ({ box, onClose }) => {
             {loading ? <div style={{ textAlign: "center", padding: 12, color: "#bbb", fontSize: 16 }}>読み込み中…</div>
               : topCards?.length > 0 ? <>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                  {topCards.map((c, i) => { const clr = c.rate >= 30 ? "#16a34a" : c.rate >= 0 ? "#f59e0b" : "#dc2626"; return <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ border: "1px solid #eee", borderRadius: 10, overflow: "hidden", cursor: "pointer", transition: "box-shadow .2s, transform .2s", backgroundColor: "#fff" }} onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.06)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                    <div style={{ position: "relative" }}>
-                      {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", aspectRatio: "0.72", objectFit: "cover", display: "block" }} />
-                        : <div style={{ width: "100%", aspectRatio: "0.72", backgroundColor: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
-                      {c.rarity && <span style={{ position: "absolute", top: 4, left: 4, fontSize: 9, fontWeight: 800, color: "#fff", backgroundColor: rarityColors[c.rarity] || "#888", padding: "2px 5px", borderRadius: 3 }}>{c.rarity}</span>}
-                      {c.psa10 > 0 && <span style={{ position: "absolute", top: 4, right: 4, fontSize: 9, fontWeight: 800, color: "#fff", backgroundColor: clr, padding: "2px 5px", borderRadius: 3 }}>{c.rate >= 0 ? "+" : ""}{c.rate}%</span>}
-                    </div>
+                  {topCards.map((c, i) => <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ border: "1px solid #eee", borderRadius: 10, overflow: "hidden", cursor: "pointer", transition: "box-shadow .2s, transform .2s", backgroundColor: "#fff" }} onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.06)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                    {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", aspectRatio: "0.72", objectFit: "cover", display: "block" }} />
+                      : <div style={{ width: "100%", aspectRatio: "0.72", backgroundColor: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
                     <div style={{ padding: "6px 8px" }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: "#222", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 1 }}>{c.card_name}</div>
-                      {c.pack && <div style={{ fontSize: 10, color: "#aaa", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.pack}</div>}
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                        <span style={{ fontSize: 9, color: "#aaa" }}>素体</span>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: "#111", fontVariantNumeric: "tabular-nums" }}>¥{c.card_price?.toLocaleString()}</span>
-                      </div>
-                      {c.psa10 > 0 && <>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                          <span style={{ fontSize: 9, color: "#aaa" }}>PSA10</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: "#555", fontVariantNumeric: "tabular-nums" }}>¥{c.psa10.toLocaleString()}</span>
-                        </div>
-                        <div style={{ padding: "4px 0", borderTop: "1px solid #f0f0f0", display: "flex", justifyContent: "space-between" }}>
-                          <span style={{ fontSize: 9, color: "#aaa" }}>利益</span>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: clr, fontVariantNumeric: "tabular-nums" }}>¥{c.profit.toLocaleString()} ({c.rate}%)</span>
-                        </div>
-                      </>}
-                      <a href={merUrl(`${c.card_name} ${c.rarity || ""}`)} onClick={e => e.stopPropagation()} rel="noopener noreferrer"
-                        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3, marginTop: 4, padding: "5px 0", borderRadius: 5, fontSize: 10, fontWeight: 600, color: "#dc2626", backgroundColor: "#fef2f2", border: "1px solid #fecaca", textDecoration: "none", transition: "background .12s" }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "#fee2e2"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fef2f2"}>
-                        <img src="/icons/mercari.png" alt="" style={{ width: 12, height: 12, borderRadius: 2 }} />メルカリで相場を見る
-                      </a>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#222", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{c.card_name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>¥{c.card_price?.toLocaleString()}</div>
                     </div>
-                  </div>; })}
+                  </div>)}
                 </div>
               </> : <div style={{ textAlign: "center", padding: 12, color: "#ccc", fontSize: 16 }}>カードデータ未登録</div>}
           </div>
