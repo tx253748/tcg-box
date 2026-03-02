@@ -56,9 +56,85 @@ const SparkDate = ({ rawData, totalDays = 365, h = 44, color = "#16a34a" }) => {
   return <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ display: "block", width: "100%", height: h }}><polyline points={pts} fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" /><circle cx={lx} cy={ly} r={5} fill={color} /></svg>;
 };
 
+const CardDetail = ({ cardId, cardName, onClose }) => {
+  const [card, setCard] = useState(null);
+  const [prices, setPrices] = useState([]);
+  const [boxes, setBoxes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!cardId) return;
+    Promise.all([
+      sbGet(`featured_cards?select=id,name,rarity,img_url&id=eq.${cardId}`),
+      sbGet(`featured_card_prices?select=card_id,price_raw,fetched_date&card_id=eq.${cardId}&order=fetched_date.asc`),
+      sbGet(`box_top_cards?select=box_id,boxes(id,name,image_url,release_date)&featured_card_id=eq.${cardId}`),
+    ]).then(([c, p, b]) => {
+      setCard(Array.isArray(c) && c[0] ? c[0] : null);
+      setPrices(Array.isArray(p) ? p.filter(x => x.price_raw) : []);
+      setBoxes(Array.isArray(b) ? b.map(x => x.boxes).filter(Boolean) : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [cardId]);
+
+  const latest = prices.length ? prices[prices.length - 1].price_raw : null;
+  const first = prices.length > 1 ? prices[0].price_raw : null;
+  const diff = latest && first ? latest - first : null;
+  const pct = diff && first ? Math.round((diff / first) * 100) : null;
+  const sparkCol = diff >= 0 ? "#16a34a" : "#dc2626";
+
+  return <>
+    <div className="modal-overlay" onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)", zIndex: 200, backdropFilter: "blur(4px)" }} />
+    <div style={{ position: "fixed", inset: 0, zIndex: 201, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "16px 10px", overflow: "auto" }} onClick={onClose}>
+      <div className="modal-content" style={{ backgroundColor: "#fff", borderRadius: 16, maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.04)" }} onClick={e => e.stopPropagation()}>
+        {loading ? <div style={{ padding: 40, textAlign: "center", color: "#bbb" }}>読み込み中…</div> : card ? <>
+          <div style={{ padding: "12px 14px 0", position: "relative" }}>
+            <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: "#f0f0f0", border: "none", color: "#999", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>✕</button>
+            {/* カード画像 */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+              {card.img_url ? <img src={card.img_url} alt={card.name} style={{ height: 200, borderRadius: 10, objectFit: "contain", boxShadow: "0 4px 16px rgba(0,0,0,.1)" }} />
+                : <div style={{ width: 140, height: 200, borderRadius: 10, backgroundColor: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "#ccc" }}>{card.rarity}</div>}
+            </div>
+            {/* カード名 + レアリティ */}
+            <div style={{ textAlign: "center", marginBottom: 4 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.3 }}>{card.name}</div>
+              <div style={{ fontSize: 14, color: "#999", marginTop: 2 }}>{card.rarity}</div>
+            </div>
+            {/* 価格 */}
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 30, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{latest ? `¥${latest.toLocaleString()}` : "—"}</span>
+              {diff != null && <div style={{ fontSize: 14, fontWeight: 600, color: diff >= 0 ? "#16a34a" : "#dc2626", marginTop: 2 }}>{diff > 0 ? "+" : ""}{diff.toLocaleString()} ({diff > 0 ? "+" : ""}{pct}%)</div>}
+            </div>
+          </div>
+          <div style={{ padding: "0 14px 14px" }}>
+            {/* スパークライン */}
+            {prices.length >= 2 && <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
+              <SparkDate rawData={prices.map(p => ({ date: p.fetched_date, price: p.price_raw }))} totalDays={365} h={50} color={sparkCol} />
+            </div>}
+            {/* 収録BOX */}
+            {boxes.length > 0 && <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#999", marginBottom: 6 }}>収録BOX</div>
+              {boxes.map((bx, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: i < boxes.length - 1 ? "1px solid #f0f0f0" : "none" }}>
+                {bx.image_url && <img src={bx.image_url} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bx.name}</div>
+                  {bx.release_date && <div style={{ fontSize: 12, color: "#bbb" }}>{fmtDate(bx.release_date)}</div>}
+                </div>
+              </div>)}
+            </div>}
+            {/* メルカリリンク */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <a href={`https://jp.mercari.com/search?keyword=${encodeURIComponent(card.name + " ポケカ")}`} rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 15, fontWeight: 600, color: "#555", textDecoration: "none", padding: "8px 20px", borderRadius: 8, border: "1px solid #e8e8e8", backgroundColor: "#fafafa", transition: "all .2s", boxShadow: "0 1px 3px rgba(0,0,0,.04)" }} onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f0f0f0"; e.currentTarget.style.transform = "translateY(-1px)"; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#fafafa"; e.currentTarget.style.transform = "translateY(0)"; }}><img src="/icons/mercari.png" alt="" style={{ width: 20, height: 20, borderRadius: 4 }} />メルカリで探す<span style={{ fontSize: 12, color: "#bbb" }}>↗</span></a>
+            </div>
+          </div>
+        </> : <div style={{ padding: 40, textAlign: "center", color: "#ccc" }}>カードが見つかりません</div>}
+      </div>
+    </div>
+  </>;
+};
+
 const BoxDetail = ({ box, onClose }) => {
   const [topCards, setTopCards] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selCard, setSelCard] = useState(null);
   useEffect(() => {
     if (!box) return;
     sbGet(`box_top_cards?select=id,rank,probability,featured_card_id&box_id=eq.${box.id}&order=rank`)
@@ -75,7 +151,7 @@ const BoxDetail = ({ box, onClose }) => {
         setTopCards(d.map(r => {
           const fc = cm[r.featured_card_id] || {};
           const livePrice = pm[r.featured_card_id] || fc.price || 0;
-          return { rank: r.rank, probability: parseFloat(r.probability), card_name: fc.name || "", rarity: fc.rarity || "", card_price: livePrice, image_url: fc.img_url || null };
+          return { id: r.featured_card_id, rank: r.rank, probability: parseFloat(r.probability), card_name: fc.name || "", rarity: fc.rarity || "", card_price: livePrice, image_url: fc.img_url || null };
         }));
         setLoading(false);
       }).catch(() => { setTopCards([]); setLoading(false); });
@@ -127,15 +203,16 @@ const BoxDetail = ({ box, onClose }) => {
             </div>
             {loading ? <div style={{ textAlign: "center", padding: 12, color: "#bbb", fontSize: 16 }}>読み込み中…</div>
               : topCards?.length > 0 ? <>
-                {topCards.map((c, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < topCards.length - 1 ? "1px solid #f0f0f0" : "none" }}>
+                {topCards.map((c, i) => <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < topCards.length - 1 ? "1px solid #f0f0f0" : "none", cursor: "pointer", borderRadius: 6, transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f8f8f8"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
                   <div style={{ width: 40, height: 40, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: "1px solid #eee", backgroundColor: "#f9f9f9" }}>
                     {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>{c.card_name}</div>
-                    <div style={{ fontSize: 15, color: "#999", marginTop: 1 }}>{c.rarity} · 封入率{(c.probability * 100).toFixed(1)}%</div>
+                    <div style={{ fontSize: 15, color: "#999", marginTop: 1 }}>{c.rarity}</div>
                   </div>
                   <div style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>¥{c.card_price?.toLocaleString()}</div>
+                  <span style={{ fontSize: 13, color: "#ccc", flexShrink: 0 }}>›</span>
                 </div>)}
               </> : <div style={{ textAlign: "center", padding: 12, color: "#ccc", fontSize: 16 }}>カードデータ未登録</div>}
           </div>
@@ -147,6 +224,7 @@ const BoxDetail = ({ box, onClose }) => {
         </div>
       </div>
     </div>
+    {selCard && <CardDetail cardId={selCard.id} cardName={selCard.card_name} onClose={() => setSelCard(null)} />}
   </>;
 };
 
@@ -211,7 +289,7 @@ const useBoxData = () => {
           const cur = b.manual_price || so[0]?.price || null;
           const wa = new Date(); wa.setDate(wa.getDate() - 7); const wp = so.find(p => new Date(p.date) <= wa);
           const wd = (cur && wp) ? cur - wp.price : null;
-          return { id: b.id, name: b.name, release: b.release_date || "", status: b.status || null, current: cur, lastDate: so[0]?.date || null, t12: calcTrend(bp, 365), t6: calcTrend(bp, 180), t3: calcTrend(bp, 90), t1: calcTrend(bp, 30), pct12: calcPct(bp, 365), pct6: calcPct(bp, 180), pct3: calcPct(bp, 90), pct1: calcPct(bp, 30), weekDiff: wd, spark: buildSpark(bp), sparkRaw: buildSparkRaw(bp), img: b.image_url || `https://placehold.co/44x44/888/fff?text=${encodeURIComponent(b.name.slice(0, 2))}`, snkrdunk_id: b.snkrdunk_id, buyLinks: [{ name: "\u30b9\u30cb\u30c0\u30f3", url: snkUrl(b.snkrdunk_id), icon: "/icons/snkrdunk.png" }, { name: "\u30e1\u30eb\u30ab\u30ea", url: merUrl(`${b.name} BOX \u672a\u958b\u5c01`), icon: "/icons/mercari.png" }] };
+          return { id: b.id, name: b.name, release: b.release_date || "", status: b.status || null, current: cur, lastDate: so[0]?.date || null, t12: calcTrend(bp, 365), t6: calcTrend(bp, 180), t3: calcTrend(bp, 90), t1: calcTrend(bp, 30), pct12: calcPct(bp, 365), pct6: calcPct(bp, 180), pct3: calcPct(bp, 90), pct1: calcPct(bp, 30), weekDiff: wd, spark: buildSpark(bp), sparkRaw: buildSparkRaw(bp), img: b.image_url || `https://placehold.co/44x44/888/fff?text=${encodeURIComponent(b.name.slice(0, 2))}`, snkrdunk_id: b.snkrdunk_id, buyLinks: [{ name: "\u30e1\u30eb\u30ab\u30ea", url: merUrl(`${b.name} BOX \u672a\u958b\u5c01`), icon: "/icons/mercari.png" }] };
         }));
       } catch (e) { console.error(e); setBoxes([]); }
       setLoading(false);
@@ -326,7 +404,7 @@ const AdminPage = ({ onBack }) => {
               {tc.featured_cards?.img_url && <img src={tc.featured_cards.img_url} alt="" style={{ width: 28, height: 38, borderRadius: 3, objectFit: "cover" }} />}
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 600 }}>{tc.featured_cards?.name || "?"}</div>
-                <div style={{ fontSize: 13, color: "#aaa" }}>{tc.featured_cards?.rarity} {"\u30fb"} {"\u5c01\u5165\u7387"} {(tc.probability * 100).toFixed(1)}% {"\u30fb"} {"\u00a5"}{tc.featured_cards?.price?.toLocaleString()}</div>
+                <div style={{ fontSize: 13, color: "#aaa" }}>{tc.featured_cards?.rarity} {"\u30fb"} {"\u00a5"}{tc.featured_cards?.price?.toLocaleString()}</div>
               </div>
               <button onClick={() => deleteTopCard(tc.id)} style={{ fontSize: 13, color: "#dc2626", background: "none", border: "1px solid #fecaca", borderRadius: 4, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>{"\u524a\u9664"}</button>
             </div>) : <div style={{ fontSize: 15, color: "#bbb", padding: 8 }}>{"\u672a\u767b\u9332"}</div>}
