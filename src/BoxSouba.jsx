@@ -203,17 +203,19 @@ const BoxDetail = ({ box, onClose }) => {
             </div>
             {loading ? <div style={{ textAlign: "center", padding: 12, color: "#bbb", fontSize: 16 }}>読み込み中…</div>
               : topCards?.length > 0 ? <>
-                {topCards.map((c, i) => <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < topCards.length - 1 ? "1px solid #f0f0f0" : "none", cursor: "pointer", borderRadius: 6, transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f8f8f8"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
-                  <div style={{ width: 40, height: 40, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: "1px solid #eee", backgroundColor: "#f9f9f9" }}>
-                    {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>{c.card_name}</div>
-                    <div style={{ fontSize: 15, color: "#999", marginTop: 1 }}>{c.rarity}</div>
-                  </div>
-                  <div style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>¥{c.card_price?.toLocaleString()}</div>
-                  <span style={{ fontSize: 13, color: "#ccc", flexShrink: 0 }}>›</span>
-                </div>)}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                  {topCards.map((c, i) => <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ border: "1px solid #eee", borderRadius: 10, overflow: "hidden", cursor: "pointer", transition: "box-shadow .2s, transform .2s", backgroundColor: "#fff" }} onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.06)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                    <div style={{ position: "relative" }}>
+                      {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", aspectRatio: "0.72", objectFit: "cover", display: "block" }} />
+                        : <div style={{ width: "100%", aspectRatio: "0.72", backgroundColor: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
+                      {c.rarity && <span style={{ position: "absolute", top: 4, left: 4, fontSize: 9, fontWeight: 800, color: "#fff", backgroundColor: "#555", padding: "2px 5px", borderRadius: 3 }}>{c.rarity}</span>}
+                    </div>
+                    <div style={{ padding: "6px 8px" }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#222", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{c.card_name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>¥{c.card_price?.toLocaleString()}</div>
+                    </div>
+                  </div>)}
+                </div>
               </> : <div style={{ textAlign: "center", padding: 12, color: "#ccc", fontSize: 16 }}>カードデータ未登録</div>}
           </div>
 
