@@ -270,28 +270,28 @@ const BoxGridCard = ({ b, onSelect }) => {
 };
 
 const BoxRow = ({ b, isLast, onSelect }) => {
-  const [hov, setHov] = useState(false);
-  const st = stS(b.status), hv = b.current >= 15000;
-  return <div className="box-row" onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={() => onSelect(b)}
-    style={{ padding: "10px 10px", borderBottom: isLast ? "none" : "1px solid #f0f0f0", borderRadius: hv ? 10 : 0, backgroundColor: hov ? "#f7f7f7" : hv ? "#f9f9f9" : "transparent", cursor: "pointer", transition: "background-color .15s, box-shadow .2s", boxShadow: hov ? "0 2px 8px rgba(0,0,0,.04)" : "none" }}>
-    {/* 上段: 画像 + BOX名 + 価格 */}
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-      <span style={{ fontSize: 16, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
-      {b.status && b.status !== "\u2014" && <Tag st={st}>{b.status}</Tag>}
-      <span style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{b.current ? `\u00a5${b.current.toLocaleString()}` : "\u2014"}</span>
-      <span style={{ color: hov ? "#999" : "#ddd", fontSize: 15, width: 12, flexShrink: 0, textAlign: "center" }}>{"\u203a"}</span>
+  const st = stS(b.status);
+  const d = fmtDiff(b.weekDiff, b.current);
+  const wc = d ? d.col : "#aaa";
+  return <div className="box-row" onClick={() => onSelect(b)}
+    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 10px", borderBottom: isLast ? "none" : "1px solid #f3f3f3", cursor: "pointer", transition: "background-color .1s" }}
+    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#fafafa"}
+    onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
+    <img className="box-row-img" src={b.img} alt={b.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+        {b.status && b.status !== "\u2014" && <span style={{ fontSize: 9, fontWeight: 700, color: st.c, backgroundColor: st.b, padding: "1px 5px", borderRadius: 3, flexShrink: 0, border: `1px solid ${st.d}` }}>{b.status}</span>}
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: "#222", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
+      </div>
+      <div style={{ fontSize: 11, color: "#aaa" }}>{fmtDate(b.release)}</div>
     </div>
-    {/* 下段: 発売日 + 変動 + トレンド */}
-    <div className="box-row-trend" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, paddingLeft: 48 }}>
-      <span style={{ fontSize: 12, color: "#bbb" }}>{fmtDate(b.release)}</span>
-      <TG a={b.t1} b={b.t3} c={b.t6} e={b.t12} pa={b.pct1} pb={b.pct3} pc={b.pct6} pe={b.pct12} />
-      {b.weekDiff != null && (() => { const d = fmtDiff(b.weekDiff, b.current); return d ? <span style={{ fontSize: 12, fontWeight: 600, color: d.col, fontVariantNumeric: "tabular-nums", marginLeft: "auto" }}>{d.text}</span> : null; })()}
+    <div style={{ textAlign: "right", flexShrink: 0 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#111", fontVariantNumeric: "tabular-nums", lineHeight: 1.2 }}>{b.current ? `¥${b.current.toLocaleString()}` : "—"}</div>
+      {d && <div style={{ fontSize: 11, fontWeight: 600, color: wc, fontVariantNumeric: "tabular-nums" }}>{d.text}</div>}
     </div>
+    <span style={{ color: "#ddd", fontSize: 15, width: 10, flexShrink: 0, textAlign: "center" }}>›</span>
   </div>;
 };
-
-const ListHeader = () => <div style={{ display: "flex", alignItems: "center", padding: "0 10px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 2, position: "sticky", top: 48, backgroundColor: "#fff", zIndex: 5 }}><span style={{ fontSize: 13, color: "#bbb", flex: 1 }}>商品名</span><span style={{ fontSize: 13, color: "#bbb", flexShrink: 0 }}>価格</span><span style={{ width: 12 }} /></div>;
 
 const useBoxData = () => {
   const [boxes, setBoxes] = useState(null), [loading, setLoading] = useState(true);
@@ -319,180 +319,11 @@ const useBoxData = () => {
 };
 
 /* Admin */
-const AdminPage = ({ onBack }) => {
-  const [boxes, setBoxes] = useState([]);
-  const [cards, setCards] = useState([]);
-  const [selBox, setSelBox] = useState(null);
-  const [topCards, setTopCards] = useState([]);
-  const [msg, setMsg] = useState("");
-  const [tab, setTab] = useState("top");
-  const [newName, setNewName] = useState("");
-  const [newSnkId, setNewSnkId] = useState("");
-
-  useEffect(() => {
-    sbGet("boxes?select=id,name,snkrdunk_id,release_date&order=release_date.desc.nullslast&limit=500").then(d => Array.isArray(d) && setBoxes(d));
-    sbGet("featured_cards?select=id,name,rarity,price,pack,img_url&is_active=eq.true&order=sort_order&limit=500").then(d => Array.isArray(d) && setCards(d));
-  }, []);
-
-  const loadTopCards = async (boxId) => {
-    const rows = await sbGet(`box_top_cards?select=id,rank,probability,featured_card_id&box_id=eq.${boxId}&order=rank`);
-    if (!Array.isArray(rows) || !rows.length) { setTopCards([]); return; }
-    const ids = rows.map(r => r.featured_card_id).filter(Boolean);
-    const [cardsData, pricesData] = await Promise.all([
-      ids.length ? sbGet(`featured_cards?select=id,name,rarity,price,img_url&id=in.(${ids.join(",")})`) : [],
-      ids.length ? sbGet(`featured_card_prices?select=card_id,price_raw&card_id=in.(${ids.join(",")})&order=fetched_date.desc`) : [],
-    ]);
-    const cm = {}; (Array.isArray(cardsData) ? cardsData : []).forEach(c => { cm[c.id] = c; });
-    const pm = {}; (Array.isArray(pricesData) ? pricesData : []).forEach(p => { if (!pm[p.card_id] && p.price_raw) pm[p.card_id] = p.price_raw; });
-    setTopCards(rows.map(r => {
-      const fc = cm[r.featured_card_id] || {};
-      return { ...r, featured_cards: { ...fc, price: pm[r.featured_card_id] || fc.price || 0 } };
-    }));
-  };
-  const selectBox = (b) => { setSelBox(b); loadTopCards(b.id); };
-
-  const saveTopCard = async (rank, cardId, probability) => {
-    if (!selBox || !cardId) return;
-    setMsg("\u4fdd\u5b58\u4e2d\u2026");
-    await sbUpsert("box_top_cards", { box_id: selBox.id, rank, featured_card_id: cardId, probability: parseFloat(probability) || 0 });
-    loadTopCards(selBox.id);
-    setMsg("\u2713 \u4fdd\u5b58\u3057\u307e\u3057\u305f"); setTimeout(() => setMsg(""), 2000);
-  };
-
-  const deleteTopCard = async (id) => {
-    if (!confirm("\u524a\u9664\u3057\u307e\u3059\u304b\uff1f")) return;
-    await sbDel(`box_top_cards?id=eq.${id}`);
-    loadTopCards(selBox.id);
-    setMsg("\u2713 \u524a\u9664\u3057\u307e\u3057\u305f"); setTimeout(() => setMsg(""), 2000);
-  };
-
-  const addBox = async () => {
-    if (!newName.trim() || !newSnkId.trim()) { setMsg("BOX\u540d\u3068\u30b9\u30cb\u30c0\u30f3ID\u3092\u5165\u529b"); return; }
-    setMsg("\u767b\u9332\u4e2d\u2026");
-    const res = await sbPost("boxes", { name: newName.trim(), snkrdunk_id: newSnkId.trim() });
-    if (Array.isArray(res) && res[0]) { setBoxes(prev => [res[0], ...prev]); setNewName(""); setNewSnkId(""); setMsg("\u2713 BOX\u767b\u9332\u3057\u307e\u3057\u305f"); }
-    else setMsg("Error: " + JSON.stringify(res));
-    setTimeout(() => setMsg(""), 3000);
-  };
-
-  const S = { label: { fontSize: 14, color: "#888", fontWeight: 600, marginBottom: 3, display: "block" }, input: { fontSize: 16, padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }, card: { backgroundColor: "#fff", borderRadius: 10, border: "1px solid #eee", padding: 12, marginBottom: 8 } };
-
-  return <div style={{ minHeight: "100vh", backgroundColor: "#f5f5f5", fontFamily: "'Noto Sans JP',sans-serif" }}>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box}body{margin:0}`}</style>
-    <div style={{ backgroundColor: "#111", color: "#fff", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <span style={{ fontSize: 17, fontWeight: 800 }}>{"\u2699\ufe0f"} BOX{"\u76f8\u5834"}AI {"\u7ba1\u7406"}</span>
-      <button onClick={onBack} style={{ fontSize: 15, color: "#aaa", background: "none", border: "1px solid #555", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontFamily: "inherit" }}>{"\u2190"} {"\u30b5\u30a4\u30c8\u306b\u623b\u308b"}</button>
-    </div>
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: "16px 20px" }}>
-      {msg && <div style={{ padding: "8px 12px", borderRadius: 6, backgroundColor: msg.startsWith("\u2713") ? "#f0fdf4" : "#fef2f2", border: `1px solid ${msg.startsWith("\u2713") ? "#bbf7d0" : "#fecaca"}`, marginBottom: 4, fontSize: 15, fontWeight: 600, color: msg.startsWith("\u2713") ? "#16a34a" : "#dc2626" }}>{msg}</div>}
-      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-        <button onClick={() => setTab("top")} style={{ ...pill(tab === "top"), padding: "8px 20px", fontSize: 16 }}>{"\ud83c\udfc6"} TOP{"\u30ab\u30fc\u30c9\u7ba1\u7406"}</button>
-        <button onClick={() => setTab("box")} style={{ ...pill(tab === "box"), padding: "8px 20px", fontSize: 16 }}>{"\ud83d\udce6"} BOX{"\u767b\u9332"}</button>
-      </div>
-
-      {tab === "box" && <div style={S.card}>
-        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 8 }}>{"\ud83d\udce6"} BOX{"\u65b0\u898f\u767b\u9332"}</div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <div style={{ flex: 2 }}><label style={S.label}>BOX{"\u540d"}</label><input value={newName} onChange={e => setNewName(e.target.value)} placeholder="\u8d85\u96fb\u30d6\u30ec\u30a4\u30ab\u30fc" style={S.input} /></div>
-          <div style={{ flex: 1 }}><label style={S.label}>{"\u30b9\u30cb\u30c0\u30f3"}ID</label><input value={newSnkId} onChange={e => setNewSnkId(e.target.value)} placeholder="12345" style={S.input} /></div>
-        </div>
-        <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>{"\u30b9\u30cb\u30c0\u30f3"}ID = https://snkrdunk.com/trading-cards/<b>XXXXX</b></div>
-        <button onClick={addBox} style={{ fontSize: 16, fontWeight: 700, color: "#fff", backgroundColor: "#111", border: "none", borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontFamily: "inherit" }}>{"\u767b\u9332"}</button>
-        <div style={{ marginTop: 16, fontSize: 16, fontWeight: 700, color: "#555" }}>{"\u767b\u9332\u6e08"}BOX ({boxes.length}{"\u4ef6"})</div>
-        <div style={{ maxHeight: 300, overflow: "auto", marginTop: 8 }}>
-          {boxes.map(b => <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #f5f5f5", fontSize: 15 }}>
-            <span style={{ color: "#aaa", width: 40, flexShrink: 0 }}>#{b.id}</span>
-            <span style={{ flex: 1, fontWeight: 600 }}>{b.name}</span>
-            <span style={{ color: "#bbb", fontSize: 14 }}>snk:{b.snkrdunk_id}</span>
-          </div>)}
-        </div>
-      </div>}
-
-      {tab === "top" && <>
-        <div style={S.card}>
-          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>{"\u2460"} BOX{"\u9078\u629e"}</div>
-          <select value={selBox?.id || ""} onChange={e => { const b = boxes.find(x => x.id == e.target.value); if (b) selectBox(b); }} style={{ ...S.input, fontSize: 16 }}>
-            <option value="">-- BOX{"\u3092\u9078\u629e"} --</option>
-            {boxes.map(b => <option key={b.id} value={b.id}>{b.name} (ID:{b.id})</option>)}
-          </select>
-        </div>
-        {selBox && <>
-          <div style={S.card}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>{"\u2461"} {"\u73fe\u5728"}TOP{"\u30ab\u30fc\u30c9"} {"\u2014"} {selBox.name}</div>
-            {topCards.length > 0 ? topCards.map(tc => <div key={tc.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
-              <div style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: "#EAB30815", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: "#EAB308" }}>{tc.rank}</div>
-              {tc.featured_cards?.img_url && <img src={tc.featured_cards.img_url} alt="" style={{ width: 28, height: 38, borderRadius: 3, objectFit: "cover" }} />}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>{tc.featured_cards?.name || "?"}</div>
-                <div style={{ fontSize: 13, color: "#aaa" }}>{tc.featured_cards?.rarity} {"\u30fb"} {"\u00a5"}{tc.featured_cards?.price?.toLocaleString()}</div>
-              </div>
-              <button onClick={() => deleteTopCard(tc.id)} style={{ fontSize: 13, color: "#dc2626", background: "none", border: "1px solid #fecaca", borderRadius: 4, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>{"\u524a\u9664"}</button>
-            </div>) : <div style={{ fontSize: 15, color: "#bbb", padding: 8 }}>{"\u672a\u767b\u9332"}</div>}
-          </div>
-          <TopCardAdder boxId={selBox.id} cards={cards} onSave={saveTopCard} existingRanks={topCards.map(t => t.rank)} />
-        </>}
-      </>}
-    </div>
-  </div>;
-};
-
-const TopCardAdder = ({ boxId, cards, onSave, existingRanks }) => {
-  const [rank, setRank] = useState("");
-  const [cardId, setCardId] = useState("");
-  const [prob, setProb] = useState("");
-  const [search, setSearch] = useState("");
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return cards.slice(0, 20);
-    const lw = search.toLowerCase();
-    return cards.filter(c => c.name.toLowerCase().includes(lw) || (c.pack || "").toLowerCase().includes(lw)).slice(0, 30);
-  }, [cards, search]);
-
-  const selectedCard = cards.find(c => c.id === cardId);
-  const nextRank = existingRanks.length > 0 ? Math.max(...existingRanks) + 1 : 1;
-  const S = { label: { fontSize: 14, color: "#888", fontWeight: 600, marginBottom: 3, display: "block" }, input: { fontSize: 16, padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }, card: { backgroundColor: "#fff", borderRadius: 10, border: "1px solid #eee", padding: 12, marginBottom: 8 } };
-
-  return <div style={S.card}>
-    <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>{"\u2462"} TOP{"\u30ab\u30fc\u30c9\u8ffd\u52a0"}</div>
-    <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-      <div style={{ width: 70 }}><label style={S.label}>{"\u9806\u4f4d"}</label><input value={rank || nextRank} onChange={e => setRank(e.target.value.replace(/\D/g, ""))} style={S.input} /></div>
-      <div style={{ width: 100 }}><label style={S.label}>{"\u5c01\u5165\u7387"} (%)</label><input value={prob} onChange={e => setProb(e.target.value)} placeholder="0.51" style={S.input} /></div>
-    </div>
-    <label style={S.label}>{"\u30ab\u30fc\u30c9\u691c\u7d22"}</label>
-    <input value={search} onChange={e => setSearch(e.target.value)} placeholder={"\u30ab\u30fc\u30c9\u540d or \u30d1\u30c3\u30af\u540d\u3067\u691c\u7d22\u2026"} style={{ ...S.input, marginBottom: 8 }} />
-    {selectedCard && <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", backgroundColor: "#f0fdf4", borderRadius: 6, border: "1px solid #bbf7d0", marginBottom: 8 }}>
-      <span style={{ fontSize: 14, color: "#16a34a", fontWeight: 700 }}>{"\u2713"} {"\u9078\u629e\u4e2d"}:</span>
-      {selectedCard.img_url && <img src={selectedCard.img_url} alt="" style={{ width: 24, height: 32, borderRadius: 2, objectFit: "cover" }} />}
-      <span style={{ fontSize: 15, fontWeight: 600 }}>{selectedCard.name}</span>
-      <span style={{ fontSize: 13, color: "#888" }}>{selectedCard.rarity} {"\u30fb"} {"\u00a5"}{selectedCard.price?.toLocaleString()}</span>
-      <button onClick={() => setCardId("")} style={{ marginLeft: "auto", fontSize: 13, color: "#888", background: "none", border: "none", cursor: "pointer" }}>{"\u2715"}</button>
-    </div>}
-    <div style={{ maxHeight: 200, overflow: "auto", border: "1px solid #f0f0f0", borderRadius: 6 }}>
-      {filtered.map(c => <div key={c.id} onClick={() => setCardId(c.id)}
-        style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", cursor: "pointer", backgroundColor: c.id === cardId ? "#eff6ff" : "transparent", borderBottom: "1px solid #f9f9f9" }}
-        onMouseEnter={e => { if (c.id !== cardId) e.currentTarget.style.backgroundColor = "#fafafa"; }}
-        onMouseLeave={e => { if (c.id !== cardId) e.currentTarget.style.backgroundColor = "transparent"; }}>
-        {c.img_url && <img src={c.img_url} alt="" style={{ width: 22, height: 30, borderRadius: 2, objectFit: "cover", flexShrink: 0 }} />}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
-          <div style={{ fontSize: 13, color: "#aaa" }}>{c.pack} {"\u30fb"} {c.rarity}</div>
-        </div>
-        <div style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{"\u00a5"}{c.price?.toLocaleString()}</div>
-      </div>)}
-    </div>
-    <button onClick={() => { onSave(parseInt(rank) || nextRank, cardId, (parseFloat(prob) || 0) / 100); setRank(""); setProb(""); setCardId(""); setSearch(""); }}
-      disabled={!cardId} style={{ marginTop: 10, fontSize: 16, fontWeight: 700, color: "#fff", backgroundColor: cardId ? "#111" : "#ccc", border: "none", borderRadius: 8, padding: "10px 24px", cursor: cardId ? "pointer" : "default", fontFamily: "inherit" }}>
-      TOP{"\u30ab\u30fc\u30c9\u3092\u8ffd\u52a0"}
-    </button>
-  </div>;
-};
-
 export default function BoxSoubaApp() {
-  const [page, setPage] = useState("main");
   const [sel, setSel] = useState(null);
   const { boxes: live, loading } = useBoxData();
   const all = live || [];
-  const [q, setQ] = useState(""), [qOpen, setQOpen] = useState(false), [view, setView] = useState("grid"), [fOpen, setFOpen] = useState(false);
+  const [q, setQ] = useState(""), [view, setView] = useState("grid"), [fOpen, setFOpen] = useState(false);
   const [period, setPeriod] = useState("week"), [dir, setDir] = useState("all"), [sort, setSort] = useState("release_date");
   const [pMin, setPMin] = useState(""), [pMax, setPMax] = useState(""), [yMin, setYMin] = useState(""), [yMax, setYMax] = useState(""), [hideNP, setHideNP] = useState(true), [noRelease, setNoRelease] = useState(false);
   const lastUp = useMemo(() => { let l = null; all.forEach(b => { if (b.lastDate && (!l || b.lastDate > l)) l = b.lastDate; }); return l; }, [all]);
@@ -511,8 +342,6 @@ export default function BoxSoubaApp() {
   }, [all, q, period, dir, sort, pMin, pMax, yMin, yMax, hideNP]);
   const clearF = () => { setDir("all"); setPMin(""); setPMax(""); setYMin(""); setYMax(""); };
 
-  if (page === "admin") return <AdminPage onBack={() => setPage("main")} />;
-
   return <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", fontFamily: "'Inter','Noto Sans JP','Helvetica Neue',-apple-system,sans-serif", color: "#111" }}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');
 *{box-sizing:border-box}body{margin:0}
@@ -529,38 +358,31 @@ export default function BoxSoubaApp() {
 .modal-overlay{animation:fadeIn .2s ease both}
 .modal-content{animation:slideIn .3s cubic-bezier(.16,1,.3,1) both}
 .box-row{animation:fadeUp .35s ease both}
-@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}.box-row-trend{padding-left:0!important}}
+@media(max-width:500px){.box-grid{grid-template-columns:repeat(2,1fr)!important}.box-row-img{display:none!important}}
 `}</style>
     <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 3px rgba(0,0,0,.04)", backdropFilter: "blur(12px)", background: "rgba(255,255,255,.92)" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 14px", display: "flex", alignItems: "center", gap: 10, height: 52 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <img src="/icons/logo.png" alt="BOX相場AI" style={{ height: 32, width: "auto", objectFit: "contain" }} onError={e => { e.target.style.display = "none"; }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.5px", background: "linear-gradient(135deg, #111 0%, #444 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>BOX相場AI</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg, #EAB308, #F59E0B)", padding: "2px 7px", borderRadius: 4, letterSpacing: ".5px" }}>BETA</span>
-          </div>
+          <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-.5px", background: "linear-gradient(135deg, #111 0%, #444 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>BOX相場AI</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg, #EAB308, #F59E0B)", padding: "2px 6px", borderRadius: 4 }}>BETA</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {lastUp && <span style={{ fontSize: 13, color: "#bbb" }}>更新 {lastUp.replace(/-/g, "/")}</span>}
-          <button onClick={() => setPage("admin")} style={{ fontSize: 14, padding: "4px 8px", borderRadius: 4, border: "1px solid #eee", backgroundColor: "#fff", color: "#aaa", cursor: "pointer", fontFamily: "inherit", transition: "all .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f5f5f5"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}>⚙️</button>
+        <div style={{ flex: 1, position: "relative" }}>
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="BOX名で検索…" style={{ fontSize: 14, padding: "7px 30px 7px 10px", borderRadius: 8, border: "1px solid #e5e5e5", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box", backgroundColor: "#f5f5f5", transition: "border-color .2s, background-color .2s" }} onFocus={e => { e.target.style.borderColor = "#bbb"; e.target.style.backgroundColor = "#fff"; }} onBlur={e => { e.target.style.borderColor = "#e5e5e5"; e.target.style.backgroundColor = "#f5f5f5"; }} />
+          {q && <button onClick={() => setQ("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#bbb" }}>✕</button>}
         </div>
+        {lastUp && <span style={{ fontSize: 12, color: "#bbb", flexShrink: 0, whiteSpace: "nowrap" }}>{lastUp.replace(/-/g, "/")}</span>}
       </div>
     </header>
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "10px 14px 60px", width: "100%" }}>
       {loading && <div style={{ textAlign: "center", padding: "60px 16px" }}><div style={{ fontSize: 36, marginBottom: 12, animation: "fadeIn .6s ease" }}>📦</div><div style={{ fontSize: 16, color: "#aaa", animation: "fadeIn .8s ease" }}>読み込み中…</div></div>}
       {!loading && <>
-        {/* 検索展開時 */}
-        {qOpen && <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-          <div style={{ flex: 1, position: "relative" }}><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder={"BOX名で検索…"} style={{ fontSize: 16, padding: "10px 32px 10px 14px", borderRadius: 10, border: "1px solid #e0e0e0", outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box", boxShadow: "0 1px 4px rgba(0,0,0,.04) inset", transition: "border-color .2s" }} onFocus={e => e.target.style.borderColor = "#999"} onBlur={e => e.target.style.borderColor = "#e0e0e0"} /><button onClick={() => { setQ(""); setQOpen(false); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#bbb" }}>✕</button></div>
-        </div>}
-        {/* メインツールバー: ソート | 表示切替 | 絞り込み | 検索 */}
+        {/* ツールバー: ソート | 表示切替 | 絞り込み */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0", marginBottom: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 3 }}>{[["release_date", "発売日"], ["change", "変動率"], ["price", "価格"]].map(([k, l]) => <button key={k} onClick={() => setSort(k)} style={pill(sort === k)}>{l}</button>)}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <button onClick={() => setQOpen(!qOpen)} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: qOpen || q ? "#111" : "#fff", color: qOpen || q ? "#fff" : "#aaa", borderColor: qOpen || q ? "#111" : "#eee" }}>🔍</button>
             <button onClick={() => setFOpen(!fOpen)} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: hasF ? "#111" : "#fff", color: hasF ? "#fff" : "#aaa", borderColor: hasF ? "#111" : "#eee" }}>{hasF ? `${fCnt}` : "⊘"}</button>
-            <button onClick={() => setView("list")} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: view === "list" ? "#111" : "#fff", color: view === "list" ? "#fff" : "#aaa", borderColor: view === "list" ? "#111" : "#eee" }}>☰</button>
-            <button onClick={() => setView("grid")} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: view === "grid" ? "#111" : "#fff", color: view === "grid" ? "#fff" : "#aaa", borderColor: view === "grid" ? "#111" : "#eee" }}>⊞</button>
+            <button onClick={() => setView(v => v === "grid" ? "list" : "grid")} style={{ width: 34, height: 34, borderRadius: 8, cursor: "pointer", border: "1px solid #eee", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s", backgroundColor: "#fff", color: "#888" }}>{view === "grid" ? "⊞" : "☰"}</button>
           </div>
         </div>
         {fOpen && <div style={{ padding: "10px 12px", backgroundColor: "#fafafa", border: "1px solid #e8e8e8", borderRadius: 10, marginBottom: 6, boxShadow: "0 2px 8px rgba(0,0,0,.03)", animation: "fadeUp .25s ease both" }}>
@@ -575,7 +397,7 @@ export default function BoxSoubaApp() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}><input type="checkbox" checked={hideNP} onChange={e => setHideNP(e.target.checked)} style={{ accentColor: "#111" }} /><span style={{ fontSize: 15, color: "#888" }}>価格なし非表示</span></label><div style={{ display: "flex", alignItems: "center", gap: 8 }}>{hasF && <button onClick={clearF} style={{ fontSize: 14, color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>× リセット</button>}<span style={{ fontSize: 15, color: "#bbb" }}>{filtered.length}件</span></div></div>
         </div>}
         {view === "grid" ? <div className="box-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>{filtered.map(b => <BoxGridCard key={b.id} b={b} onSelect={setSel} />)}</div>
-          : <><ListHeader />{filtered.map((b, i) => <BoxRow key={b.id} b={b} isLast={i === filtered.length - 1} onSelect={setSel} />)}</>}
+          : <>{filtered.map((b, i) => <BoxRow key={b.id} b={b} isLast={i === filtered.length - 1} onSelect={setSel} />)}</>}
         {!filtered.length && <div style={{ textAlign: "center", padding: "48px 16px", animation: "fadeIn .4s ease" }}><div style={{ fontSize: 32, marginBottom: 8 }}>📭</div><div style={{ fontSize: 16, color: "#ccc" }}>該当するBOXが見つかりません</div></div>}
       </>}
     </div>
