@@ -65,7 +65,7 @@ const CardDetail = ({ cardId, cardName, onClose }) => {
     if (!cardId) return;
     Promise.all([
       sbGet(`featured_cards?select=id,name,rarity,img_url&id=eq.${cardId}`),
-      sbGet(`featured_card_prices?select=card_id,price_raw,fetched_date&card_id=eq.${cardId}&order=fetched_date.asc`),
+      sbGet(`featured_card_prices?select=card_id,price_raw,fetched_date&card_id=eq.${cardId}&order=fetched_date.desc&limit=1`),
       sbGet(`box_top_cards?select=box_id,boxes(id,name,image_url,release_date)&featured_card_id=eq.${cardId}`),
     ]).then(([c, p, b]) => {
       setCard(Array.isArray(c) && c[0] ? c[0] : null);
@@ -75,11 +75,7 @@ const CardDetail = ({ cardId, cardName, onClose }) => {
     }).catch(() => setLoading(false));
   }, [cardId]);
 
-  const latest = prices.length ? prices[prices.length - 1].price_raw : null;
-  const first = prices.length > 1 ? prices[0].price_raw : null;
-  const diff = latest && first ? latest - first : null;
-  const pct = diff && first ? Math.round((diff / first) * 100) : null;
-  const sparkCol = diff >= 0 ? "#16a34a" : "#dc2626";
+  const latest = prices.length ? prices[0].price_raw : null;
 
   return <>
     <div className="modal-overlay" onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)", zIndex: 200, backdropFilter: "blur(4px)" }} />
@@ -101,14 +97,9 @@ const CardDetail = ({ cardId, cardName, onClose }) => {
             {/* 価格 */}
             <div style={{ textAlign: "center", marginBottom: 8 }}>
               <span style={{ fontSize: 30, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{latest ? `¥${latest.toLocaleString()}` : "—"}</span>
-              {diff != null && <div style={{ fontSize: 14, fontWeight: 600, color: diff >= 0 ? "#16a34a" : "#dc2626", marginTop: 2 }}>{diff > 0 ? "+" : ""}{diff.toLocaleString()} ({diff > 0 ? "+" : ""}{pct}%)</div>}
             </div>
           </div>
           <div style={{ padding: "0 14px 14px" }}>
-            {/* スパークライン */}
-            {prices.length >= 2 && <div style={{ backgroundColor: "#f8f8f8", borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
-              <SparkDate rawData={prices.map(p => ({ date: p.fetched_date, price: p.price_raw }))} totalDays={365} h={50} color={sparkCol} />
-            </div>}
             {/* 収録BOX */}
             {boxes.length > 0 && <div style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#999", marginBottom: 6 }}>収録BOX</div>
@@ -203,19 +194,19 @@ const BoxDetail = ({ box, onClose }) => {
             </div>
             {loading ? <div style={{ textAlign: "center", padding: 12, color: "#bbb", fontSize: 16 }}>読み込み中…</div>
               : topCards?.length > 0 ? <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                  {topCards.map((c, i) => <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ border: "1px solid #eee", borderRadius: 10, overflow: "hidden", cursor: "pointer", transition: "box-shadow .2s, transform .2s", backgroundColor: "#fff" }} onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.06)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                    <div style={{ position: "relative" }}>
-                      {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", aspectRatio: "0.72", objectFit: "cover", display: "block" }} />
-                        : <div style={{ width: "100%", aspectRatio: "0.72", backgroundColor: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
-                      {c.rarity && <span style={{ position: "absolute", top: 4, left: 4, fontSize: 9, fontWeight: 800, color: "#fff", backgroundColor: "#555", padding: "2px 5px", borderRadius: 3 }}>{c.rarity}</span>}
-                    </div>
-                    <div style={{ padding: "6px 8px" }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: "#222", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{c.card_name}</div>
-                      <div style={{ fontSize: 14, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>¥{c.card_price?.toLocaleString()}</div>
-                    </div>
-                  </div>)}
-                </div>
+                {topCards.map((c, i) => <div key={i} onClick={e => { e.stopPropagation(); setSelCard(c); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < topCards.length - 1 ? "1px solid #f0f0f0" : "none", cursor: "pointer", borderRadius: 6, transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f8f8f8"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
+                  <div style={{ width: 40, height: 56, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: "1px solid #eee", backgroundColor: "#f9f9f9" }}>
+                    {c.image_url ? <img src={c.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#ccc", fontWeight: 700 }}>{c.rarity}</div>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>{c.card_name}</div>
+                    <div style={{ fontSize: 13, color: "#999", marginTop: 1 }}>{c.rarity}</div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>¥{c.card_price?.toLocaleString()}</div>
+                  </div>
+                  <span style={{ fontSize: 13, color: "#ccc", flexShrink: 0 }}>›</span>
+                </div>)}
               </> : <div style={{ textAlign: "center", padding: 12, color: "#ccc", fontSize: 16 }}>カードデータ未登録</div>}
           </div>
 
